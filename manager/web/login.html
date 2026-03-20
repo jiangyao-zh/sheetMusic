@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乐谱管理系统 - 登录</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --font-sans: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            --bg: oklch(97.3% 0.013 238);
+            --bg-elevated: oklch(99.2% 0.008 238);
+            --text: oklch(29.5% 0.028 252);
+            --text-muted: oklch(50.8% 0.02 248);
+            --brand: oklch(60.8% 0.178 255);
+            --brand-hover: oklch(55.5% 0.17 255);
+            --danger: oklch(58% 0.2 26);
+            --border: oklch(89.2% 0.014 248);
+            --focus-ring: oklch(67.5% 0.13 253 / 0.38);
+            --shadow-soft: 0 16px 50px oklch(28% 0.05 250 / 0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: oklch(19.2% 0.03 253);
+                --bg-elevated: oklch(24.5% 0.028 252);
+                --text: oklch(92.8% 0.012 251);
+                --text-muted: oklch(74.8% 0.016 248);
+                --brand: oklch(72.3% 0.14 254);
+                --brand-hover: oklch(78% 0.142 254);
+                --danger: oklch(73.2% 0.13 24);
+                --border: oklch(35.2% 0.02 250);
+                --focus-ring: oklch(72.3% 0.14 254 / 0.3);
+                --shadow-soft: 0 18px 60px oklch(0% 0 0 / 0.35);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-sans);
+            background: radial-gradient(circle at 18% 18%, oklch(90% 0.06 255 / 0.42), transparent 45%),
+                        radial-gradient(circle at 86% 10%, oklch(90% 0.08 170 / 0.34), transparent 40%),
+                        var(--bg);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+
+        .login-container {
+            width: min(100%, 27rem);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+            padding: clamp(1.25rem, 2.8vw, 2rem);
+            backdrop-filter: blur(4px);
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-wrap: balance;
+        }
+
+        .brand-subtitle {
+            margin: 0.5rem 0 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.95rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: var(--text-muted);
+            font-size: 0.93rem;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            min-height: 44px;
+            padding: 0.72rem 0.78rem;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: color-mix(in oklch, var(--bg-elevated) 92%, var(--text) 8%);
+            color: var(--text);
+            font-size: 0.95rem;
+            transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+        }
+
+        .form-group input::placeholder {
+            color: color-mix(in oklch, var(--text-muted) 80%, transparent);
+        }
+
+        .form-group input:focus-visible {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 4px var(--focus-ring);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            margin-top: 0.45rem;
+            width: 100%;
+            min-height: 44px;
+            padding: 0.72rem 1rem;
+            background: var(--brand);
+            color: color-mix(in oklch, var(--brand) 8%, white);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.98rem;
+            font-weight: 650;
+            transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+                        background-color 180ms ease,
+                        box-shadow 180ms ease;
+            box-shadow: 0 8px 18px oklch(58% 0.16 255 / 0.24);
+        }
+
+        .btn:hover {
+            background: var(--brand-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 12px oklch(58% 0.16 255 / 0.22);
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px var(--focus-ring), 0 8px 18px oklch(58% 0.16 255 / 0.24);
+        }
+
+        .btn:disabled {
+            opacity: 0.62;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .helper {
+            margin-top: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+        }
+
+        .error {
+            color: var(--danger);
+            font-size: 0.89rem;
+            line-height: 1.35;
+            margin: 0.3rem 0 0.25rem;
+            min-height: 1.2rem;
+        }
+
+        .loading-dot {
+            display: inline-block;
+            width: 0.65em;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 900ms ease-in-out infinite;
+            vertical-align: -0.08em;
+            margin-right: 0.35em;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(0.72); opacity: 0.66; }
+            50% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 460px) {
+            .login-container {
+                border-radius: 16px;
+            }
+
+            .brand-subtitle {
+                margin-bottom: 1.2rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" role="main" aria-labelledby="loginTitle">
+        <h1 class="brand-title" id="loginTitle">乐谱管理系统</h1>
+        <p class="brand-subtitle">为练习与演奏准备更轻快的乐谱工作流</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">账号</label>
+                <input type="text" id="username" value="jiangyiyi" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" value="123456" autocomplete="current-password" required>
+            </div>
+            <div class="error" id="errorMsg" aria-live="polite"></div>
+            <button type="submit" class="btn" id="submitBtn">登录</button>
+        </form>
+        <p class="helper">支持浅色/深色主题，登录后可在乐谱页进行上传、排序与重命名。</p>
+    </div>
+    <script>
+        const existingToken = localStorage.getItem('token');
+        if (existingToken) {
+            window.location.href = '/web/sheets.html';
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMsg = document.getElementById('errorMsg');
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            submitBtn.innerHTML = loading
+                ? '<span class="loading-dot" aria-hidden="true"></span>登录中...'
+                : '登录';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            errorMsg.textContent = '';
+            setLoading(true);
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (data.code === 200) {
+                    localStorage.setItem('token', data.data.token);
+                    window.location.href = '/web/sheets.html';
+                } else {
+                    errorMsg.textContent = data.msg || '登录失败';
+                }
+            } catch (err) {
+                errorMsg.textContent = '网络连接异常，请稍后重试';
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+</html>

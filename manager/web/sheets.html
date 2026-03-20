@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乐谱列表</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --font-sans: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            --bg: oklch(97.5% 0.011 248);
+            --bg-elevated: oklch(99.4% 0.006 250);
+            --text: oklch(30.5% 0.025 250);
+            --text-muted: oklch(52% 0.018 250);
+            --border: oklch(89.5% 0.012 250);
+            --brand: oklch(62.8% 0.165 255);
+            --brand-hover: oklch(56.7% 0.16 255);
+            --success: oklch(67% 0.126 154);
+            --danger: oklch(59% 0.2 26);
+            --focus-ring: oklch(62.8% 0.165 255 / 0.28);
+            --shadow-sm: 0 6px 18px oklch(20% 0.03 250 / 0.08);
+            --shadow-md: 0 12px 32px oklch(20% 0.04 250 / 0.12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: oklch(19.5% 0.022 255);
+                --bg-elevated: oklch(24.2% 0.02 255);
+                --text: oklch(92.8% 0.011 252);
+                --text-muted: oklch(74% 0.015 248);
+                --border: oklch(36% 0.016 250);
+                --brand: oklch(72.4% 0.136 255);
+                --brand-hover: oklch(78.4% 0.136 255);
+                --success: oklch(76% 0.12 154);
+                --danger: oklch(73% 0.125 24);
+                --focus-ring: oklch(72.4% 0.136 255 / 0.28);
+                --shadow-sm: 0 8px 20px oklch(0% 0 0 / 0.26);
+                --shadow-md: 0 12px 36px oklch(0% 0 0 / 0.34);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-sans);
+            background: radial-gradient(circle at 10% 0%, oklch(92% 0.05 258 / 0.4), transparent 42%),
+                        radial-gradient(circle at 100% 8%, oklch(90% 0.06 160 / 0.35), transparent 36%),
+                        var(--bg);
+            color: var(--text);
+        }
+
+        .shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 clamp(0.8rem, 1.8vw, 1.5rem) 2rem;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 120;
+            background: color-mix(in oklch, var(--bg) 84%, var(--bg-elevated) 16%);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid color-mix(in oklch, var(--border) 82%, transparent);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem clamp(0.8rem, 1.8vw, 1.5rem);
+        }
+
+        .title-wrap h1 {
+            margin: 0;
+            font-size: clamp(1.15rem, 2.3vw, 1.6rem);
+            letter-spacing: 0.015em;
+        }
+
+        .title-wrap p {
+            margin: 0.25rem 0 0;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .btn {
+            min-height: 44px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            padding: 0.64rem 0.9rem;
+            font-weight: 650;
+            cursor: pointer;
+            transition: background-color 180ms ease,
+                        transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 180ms ease,
+                        border-color 180ms ease;
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .btn-primary {
+            color: color-mix(in oklch, var(--brand) 8%, white);
+            background: var(--brand);
+            box-shadow: 0 7px 16px oklch(56% 0.15 255 / 0.26);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .btn-ghost:hover {
+            background: color-mix(in oklch, var(--bg-elevated) 65%, var(--text) 10%);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.64;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1rem 0 0.8rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.42rem;
+            padding: 0.3rem 0.62rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: color-mix(in oklch, var(--bg-elevated) 90%, var(--text) 10%);
+        }
+
+        .status-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 0 5px color-mix(in oklch, var(--success) 20%, transparent);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: clamp(0.7rem, 1.6vw, 1rem);
+            padding-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+            transition: transform 190ms cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 190ms ease,
+                        border-color 190ms ease;
+            touch-action: pan-y;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card.dragging {
+            cursor: grabbing;
+            opacity: 0.72;
+            transform: scale(0.98);
+        }
+
+        .card.drag-over {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 4px var(--focus-ring), var(--shadow-sm);
+        }
+
+        .thumb-wrap {
+            width: 100%;
+            height: 108px;
+            background: color-mix(in oklch, var(--bg-elevated) 70%, var(--text) 8%);
+            overflow: hidden;
+        }
+
+        .card-head {
+            padding: 0.62rem 0.68rem;
+            display: flex;
+            align-items: center;
+            gap: 0.42rem;
+            border-bottom: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+
+        .card-body {
+            padding: 0.68rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 0.94rem;
+            font-weight: 650;
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: text;
+        }
+
+        .rename-input {
+            width: 100%;
+            min-height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--brand);
+            padding: 0.35rem 0.45rem;
+            font: inherit;
+            color: var(--text);
+            background: color-mix(in oklch, var(--bg-elevated) 92%, var(--text) 8%);
+            outline: none;
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+            line-height: 1;
+            transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+        }
+
+        .btn-icon:hover {
+            color: var(--brand);
+            border-color: color-mix(in oklch, var(--brand) 36%, var(--border));
+            background: color-mix(in oklch, var(--brand) 8%, transparent);
+        }
+
+        .btn-icon:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .btn-icon.delete:hover {
+            color: var(--danger);
+            border-color: color-mix(in oklch, var(--danger) 36%, var(--border));
+            background: color-mix(in oklch, var(--danger) 9%, transparent);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            border: 1px dashed color-mix(in oklch, var(--border) 75%, var(--text-muted) 25%);
+            border-radius: 16px;
+            background: color-mix(in oklch, var(--bg-elevated) 88%, var(--text) 12%);
+            padding: clamp(1.2rem, 2.4vw, 1.8rem);
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            font-size: 1.04rem;
+        }
+
+        .skeleton {
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            min-height: 280px;
+            background: linear-gradient(
+                90deg,
+                color-mix(in oklch, var(--bg-elevated) 92%, var(--text) 8%) 25%,
+                color-mix(in oklch, var(--bg-elevated) 78%, var(--text) 22%) 37%,
+                color-mix(in oklch, var(--bg-elevated) 92%, var(--text) 8%) 63%
+            );
+            background-size: 400% 100%;
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        .fab {
+            position: fixed;
+            right: 1rem;
+            bottom: 1rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--brand);
+            color: color-mix(in oklch, var(--brand) 8%, white);
+            box-shadow: var(--shadow-md);
+            font-size: 1.45rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 130;
+        }
+
+        .fab:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px var(--focus-ring), var(--shadow-md);
+        }
+
+        .toast-wrap {
+            position: fixed;
+            right: 1rem;
+            top: 4.4rem;
+            z-index: 160;
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            min-width: 220px;
+            max-width: 320px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text);
+            box-shadow: var(--shadow-sm);
+            padding: 0.7rem 0.85rem;
+            font-size: 0.9rem;
+            transform: translateY(-6px);
+            opacity: 0;
+            animation: toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .preview-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: color-mix(in oklch, var(--bg) 70%, transparent);
+            backdrop-filter: blur(1px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .preview-modal.open {
+            display: flex;
+        }
+
+        .preview-panel {
+            width: min(92vw, 920px);
+            max-height: 90vh;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-head {
+            min-height: 48px;
+            padding: 0.55rem 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+            font-weight: 650;
+        }
+
+        .preview-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        .preview-close:hover {
+            color: var(--danger);
+            border-color: color-mix(in oklch, var(--danger) 36%, var(--border));
+            background: color-mix(in oklch, var(--danger) 8%, transparent);
+        }
+
+        .preview-image-wrap {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 0.6rem;
+            overflow: auto;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: calc(90vh - 72px);
+            object-fit: contain;
+            display: block;
+            border-radius: 10px;
+        }
+
+        .toast.success {
+            border-color: color-mix(in oklch, var(--success) 40%, var(--border));
+        }
+
+        .toast.error {
+            border-color: color-mix(in oklch, var(--danger) 40%, var(--border));
+        }
+
+        @keyframes toast-in {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .header-inner {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .thumb-wrap {
+                height: 70px;
+            }
+
+            .btn-primary,
+            .btn-ghost {
+                display: none;
+            }
+
+            .fab {
+                display: inline-flex;
+            }
+
+            .status-bar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="title-wrap">
+                <h1>乐谱库</h1>
+                <p>拖拽可调整顺序，点击编辑按钮可重命名</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="uploadBtn" type="button">新增乐谱</button>
+                <button class="btn btn-ghost" id="logoutBtn" type="button">退出登录</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="shell">
+        <div class="status-bar">
+            <span class="status-chip"><span class="status-dot" aria-hidden="true"></span><span id="sheetCount">已加载 0 份乐谱</span></span>
+            <span id="statusText">就绪</span>
+        </div>
+        <div class="grid" id="grid" aria-live="polite"></div>
+    </main>
+
+    <input type="file" id="fileInput" accept="image/jpeg, image/png" multiple>
+    <button class="fab" id="fabUpload" type="button" aria-label="新增乐谱">+</button>
+    <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
+    <div class="preview-modal" id="previewModal" role="dialog" aria-modal="true" aria-label="乐谱大图预览">
+        <div class="preview-panel">
+            <div class="preview-head">
+                <span id="previewTitle">乐谱预览</span>
+                <button class="preview-close" id="previewClose" type="button" aria-label="关闭预览">×</button>
+            </div>
+            <div class="preview-image-wrap">
+                <img id="previewImage" class="preview-image" alt="乐谱大图">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/web/login.html';
+
+        const grid = document.getElementById('grid');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fabUpload = document.getElementById('fabUpload');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const statusText = document.getElementById('statusText');
+        const sheetCount = document.getElementById('sheetCount');
+        const toastWrap = document.getElementById('toastWrap');
+        const previewModal = document.getElementById('previewModal');
+        const previewImage = document.getElementById('previewImage');
+        const previewTitle = document.getElementById('previewTitle');
+        const previewClose = document.getElementById('previewClose');
+
+        const apiFetch = async (url, options = {}) => {
+            options.headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+
+            const res = await fetch(url, options);
+            if (res.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/web/login.html';
+                return null;
+            }
+
+            const text = await res.text();
+            let json;
+            try {
+                json = text ? JSON.parse(text) : {};
+            } catch {
+                json = { code: res.ok ? 200 : res.status, msg: text || '服务返回异常' };
+            }
+
+            if (!res.ok && (!json.msg || typeof json.msg !== 'string')) {
+                json.msg = '请求失败，请稍后重试';
+            }
+
+            return json;
+        };
+
+        let sheets = [];
+        let isLoading = false;
+        let isUploading = false;
+        let draggedItem = null;
+        let touchDragOverEl = null;
+        let touchDragTimer = null;
+        let touchDragActive = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const TOUCH_DRAG_DELAY = 220;
+        const TOUCH_MOVE_CANCEL = 10;
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastWrap.appendChild(toast);
+            window.setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-6px)';
+                window.setTimeout(() => toast.remove(), 180);
+            }, 2200);
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            statusText.textContent = loading ? '正在同步乐谱...' : '就绪';
+            renderGrid();
+        }
+
+        function setUploading(uploading) {
+            isUploading = uploading;
+            uploadBtn.disabled = uploading;
+            fabUpload.disabled = uploading;
+            uploadBtn.textContent = uploading ? '上传中...' : '新增乐谱';
+            statusText.textContent = uploading ? '正在上传...' : '就绪';
+        }
+
+        function updateCountText() {
+            sheetCount.textContent = `已加载 ${sheets.length} 份乐谱`;
+        }
+
+        function createFallbackSvg() {
+            const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 800'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23dce9ff'/><stop offset='100%' stop-color='%23c8f4e3'/></linearGradient></defs><rect width='600' height='800' fill='url(%23g)'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236a7485' font-size='42' font-family='sans-serif'>无预览图</text></svg>";
+            return `data:image/svg+xml;utf8,${svg}`;
+        }
+
+        function renderLoadingSkeleton() {
+            grid.innerHTML = '';
+            for (let i = 0; i < 8; i += 1) {
+                const item = document.createElement('div');
+                item.className = 'skeleton';
+                grid.appendChild(item);
+            }
+        }
+
+        function renderEmptyState() {
+            grid.innerHTML = '';
+            const empty = document.createElement('section');
+            empty.className = 'empty-state';
+            empty.innerHTML = '<strong>还没有乐谱</strong>点击“新增乐谱”开始建立你的练习曲库。';
+            grid.appendChild(empty);
+        }
+
+        async function loadSheets() {
+            setLoading(true);
+            const data = await apiFetch('/api/sheets');
+            setLoading(false);
+
+            if (!data) return;
+
+            if (data.code === 200) {
+                sheets = data.data || [];
+                updateCountText();
+                renderGrid();
+                if (sheets.length === 0) {
+                    renderEmptyState();
+                }
+            } else {
+                showToast(data.msg || '加载失败', 'error');
+            }
+        }
+
+        function renderGrid() {
+            if (isLoading) {
+                renderLoadingSkeleton();
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            if (!sheets.length) {
+                renderEmptyState();
+                return;
+            }
+
+            sheets.forEach((sheet, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.draggable = true;
+                card.dataset.id = sheet.id;
+                card.dataset.index = index;
+
+                const thumbWrap = document.createElement('div');
+                thumbWrap.className = 'thumb-wrap';
+
+                const img = document.createElement('img');
+                img.src = sheet.thumb_path;
+                img.alt = `${sheet.title || '乐谱'} 预览图`;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.onerror = () => {
+                    img.src = createFallbackSvg();
+                };
+
+                thumbWrap.appendChild(img);
+
+                const cardHead = document.createElement('div');
+                cardHead.className = 'card-head';
+
+                const title = document.createElement('p');
+                title.className = 'card-title';
+                title.textContent = sheet.title;
+                title.title = sheet.title;
+
+                const renameBtn = document.createElement('button');
+                renameBtn.type = 'button';
+                renameBtn.className = 'btn-icon';
+                renameBtn.title = '重命名';
+                renameBtn.setAttribute('aria-label', '重命名乐谱');
+                renameBtn.textContent = '✎';
+                renameBtn.addEventListener('click', () => renameSheet(sheet.id));
+
+                cardHead.append(title, renameBtn);
+
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+
+                const actions = document.createElement('div');
+                actions.className = 'card-actions';
+
+                const upBtn = document.createElement('button');
+                upBtn.type = 'button';
+                upBtn.className = 'btn-icon';
+                upBtn.title = '上移';
+                upBtn.setAttribute('aria-label', '上移');
+                upBtn.textContent = '↑';
+                upBtn.addEventListener('click', () => moveUp(index));
+
+                const downBtn = document.createElement('button');
+                downBtn.type = 'button';
+                downBtn.className = 'btn-icon';
+                downBtn.title = '下移';
+                downBtn.setAttribute('aria-label', '下移');
+                downBtn.textContent = '↓';
+                downBtn.addEventListener('click', () => moveDown(index));
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'btn-icon delete';
+                delBtn.title = '删除';
+                delBtn.setAttribute('aria-label', '删除乐谱');
+                delBtn.textContent = '×';
+                delBtn.addEventListener('click', () => deleteSheet(sheet.id));
+
+                const viewBtn = document.createElement('button');
+                viewBtn.type = 'button';
+                viewBtn.className = 'btn-icon';
+                viewBtn.title = '查看';
+                viewBtn.setAttribute('aria-label', '查看');
+                viewBtn.textContent = '▢';
+                viewBtn.addEventListener('click', () => openPreview(sheet));
+
+                actions.append(upBtn, downBtn, viewBtn, delBtn);
+                cardBody.append(actions);
+                card.append(cardHead, thumbWrap, cardBody);
+
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('drop', handleDrop);
+                card.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    card.classList.add('drag-over');
+                });
+                card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+                card.addEventListener('touchstart', handleTouchStart, { passive: true });
+                card.addEventListener('touchmove', handleTouchMove, { passive: false });
+                card.addEventListener('touchend', handleTouchEnd);
+                card.addEventListener('touchcancel', handleTouchEnd);
+
+                grid.appendChild(card);
+            });
+        }
+
+        fileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const allowedTypes = ['image/jpeg', 'image/png'];
+            const formData = new FormData();
+            const invalidNames = [];
+            const validFiles = [];
+            for (const file of files) {
+                if (!allowedTypes.includes(file.type)) {
+                    invalidNames.push(`${file.name}（格式不支持）`);
+                    continue;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    invalidNames.push(`${file.name}（超过10MB）`);
+                    continue;
+                }
+                validFiles.push(file);
+                formData.append('files', file);
+            }
+            if (!validFiles.length) {
+                showToast('没有可上传文件', 'error');
+                if (invalidNames.length) {
+                    showToast(invalidNames.slice(0, 2).join('，'), 'error');
+                }
+                e.target.value = '';
+                return;
+            }
+
+            try {
+                setUploading(true);
+                const data = await apiFetch('/api/sheets', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!data) return;
+
+                if (data.code === 200) {
+                    const uploadedCount = Array.isArray(data.data?.uploaded) ? data.data.uploaded.length : validFiles.length;
+                    const failedCount = Array.isArray(data.data?.failed) ? data.data.failed.length : 0;
+                    if (failedCount > 0) {
+                        showToast(`上传完成：成功 ${uploadedCount}，失败 ${failedCount}`, 'success');
+                    } else {
+                        showToast(`上传成功：${uploadedCount} 张`, 'success');
+                    }
+                    if (invalidNames.length) {
+                        showToast(`已跳过 ${invalidNames.length} 张不合规图片`, 'error');
+                    }
+                    await loadSheets();
+                } else {
+                    showToast(data.msg || '上传失败', 'error');
+                }
+            } catch {
+                showToast('上传失败，请稍后重试', 'error');
+            } finally {
+                setUploading(false);
+            }
+
+            e.target.value = '';
+        });
+
+        async function deleteSheet(id) {
+            if (confirm('确认删除此乐谱吗？')) {
+                const data = await apiFetch(`/api/sheets/${id}`, { method: 'DELETE' });
+                if (!data) return;
+                if (data.code === 200) {
+                    showToast('删除成功', 'success');
+                    await loadSheets();
+                } else {
+                    showToast(data.msg || '删除失败', 'error');
+                }
+            }
+        }
+
+        async function renameSheet(id) {
+            const current = sheets.find((item) => item.id === id);
+            if (!current) return;
+            const inputTitle = window.prompt('请输入新的乐谱名称', current.title);
+            if (inputTitle === null) return;
+            const nextTitle = inputTitle.trim();
+            if (!nextTitle || nextTitle === current.title) return;
+            if (sheets.some((item) => item.id !== id && item.title === nextTitle)) {
+                showToast('名称已存在，请更换', 'error');
+                return;
+            }
+            await saveTitle(id, current.title, nextTitle);
+        }
+
+        function openPreview(sheet) {
+            const imageUrl = sheet.file_path || sheet.thumb_path;
+            if (!imageUrl) {
+                showToast('无可预览图片', 'error');
+                return;
+            }
+            previewTitle.textContent = sheet.title || '乐谱预览';
+            previewImage.src = imageUrl;
+            previewImage.onerror = () => {
+                previewImage.src = createFallbackSvg();
+            };
+            previewModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreview() {
+            previewModal.classList.remove('open');
+            previewImage.src = '';
+            document.body.style.overflow = '';
+        }
+
+        function editTitle(el, id) {
+            if (el.querySelector('input')) return;
+
+            const oldTitle = el.innerText;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'rename-input';
+            input.value = oldTitle;
+            input.setAttribute('aria-label', '编辑乐谱名称');
+
+            let submitted = false;
+
+            const finishEdit = async (cancelled) => {
+                if (submitted) return;
+                submitted = true;
+
+                const nextTitle = input.value.trim();
+                if (cancelled || !nextTitle || nextTitle === oldTitle) {
+                    el.textContent = oldTitle;
+                    return;
+                }
+
+                await saveTitle(id, oldTitle, nextTitle);
+            };
+
+            input.addEventListener('blur', () => finishEdit(false));
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                }
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    finishEdit(true);
+                }
+            });
+
+            el.textContent = '';
+            el.appendChild(input);
+            input.focus();
+            input.select();
+        }
+
+        async function saveTitle(id, oldTitle, newTitle) {
+            const data = await apiFetch(`/api/sheets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle })
+            });
+
+            if (!data) return;
+
+            const current = sheets.find((item) => item.id === id);
+
+            if (data.code === 200) {
+                if (current) {
+                    current.title = newTitle;
+                }
+                showToast('已更新名称', 'success');
+                renderGrid();
+            } else {
+                if (current) {
+                    current.title = oldTitle;
+                }
+                showToast(data.msg || '重命名失败', 'error');
+                renderGrid();
+            }
+        }
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+        }
+
+        function handleDragEnd() {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+            }
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        async function handleDrop(e) {
+            e.stopPropagation();
+
+            this.classList.remove('drag-over');
+            if (draggedItem) draggedItem.classList.remove('dragging');
+
+            if (!draggedItem) {
+                return false;
+            }
+
+            if (draggedItem !== this) {
+                const draggedIdx = parseInt(draggedItem.dataset.index, 10);
+                const targetIdx = parseInt(this.dataset.index, 10);
+                await reorderAndSync(draggedIdx, targetIdx);
+            }
+
+            draggedItem = null;
+            return false;
+        }
+
+        function handleTouchStart(e) {
+            if (e.target.closest('.btn-icon') || e.target.closest('.rename-input')) return;
+            const touch = e.touches && e.touches[0];
+            if (!touch) return;
+            draggedItem = this;
+            touchDragOverEl = null;
+            touchDragActive = false;
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            if (touchDragTimer) {
+                window.clearTimeout(touchDragTimer);
+            }
+            touchDragTimer = window.setTimeout(() => {
+                if (!draggedItem) return;
+                touchDragActive = true;
+                draggedItem.classList.add('dragging');
+            }, TOUCH_DRAG_DELAY);
+        }
+
+        function handleTouchMove(e) {
+            if (!draggedItem) return;
+            const touch = e.touches && e.touches[0];
+            if (!touch) return;
+            if (!touchDragActive) {
+                const deltaX = Math.abs(touch.clientX - touchStartX);
+                const deltaY = Math.abs(touch.clientY - touchStartY);
+                if (deltaX > TOUCH_MOVE_CANCEL || deltaY > TOUCH_MOVE_CANCEL) {
+                    if (touchDragTimer) {
+                        window.clearTimeout(touchDragTimer);
+                        touchDragTimer = null;
+                    }
+                    draggedItem = null;
+                    touchDragOverEl = null;
+                }
+                return;
+            }
+            e.preventDefault();
+            const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.card');
+            if (touchDragOverEl && touchDragOverEl !== target) {
+                touchDragOverEl.classList.remove('drag-over');
+            }
+            if (target && target !== draggedItem) {
+                target.classList.add('drag-over');
+                touchDragOverEl = target;
+                return;
+            }
+            touchDragOverEl = null;
+        }
+
+        async function handleTouchEnd() {
+            if (touchDragTimer) {
+                window.clearTimeout(touchDragTimer);
+                touchDragTimer = null;
+            }
+            if (!draggedItem) return;
+            if (!touchDragActive) {
+                draggedItem = null;
+                touchDragOverEl = null;
+                return;
+            }
+            draggedItem.classList.remove('dragging');
+            if (touchDragOverEl) {
+                touchDragOverEl.classList.remove('drag-over');
+                const draggedIdx = parseInt(draggedItem.dataset.index, 10);
+                const targetIdx = parseInt(touchDragOverEl.dataset.index, 10);
+                await reorderAndSync(draggedIdx, targetIdx);
+            }
+            draggedItem = null;
+            touchDragOverEl = null;
+            touchDragActive = false;
+        }
+
+        async function reorderAndSync(draggedIdx, targetIdx) {
+            if (Number.isNaN(draggedIdx) || Number.isNaN(targetIdx) || draggedIdx === targetIdx) {
+                return;
+            }
+            const temp = sheets[draggedIdx];
+            sheets.splice(draggedIdx, 1);
+            sheets.splice(targetIdx, 0, temp);
+
+            for (let i = 0; i < sheets.length; i++) {
+                sheets[i].sort_order = i;
+                const data = await apiFetch(`/api/sheets/${sheets[i].id}/sort`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sort_order: i })
+                });
+                if (!data || data.code !== 200) {
+                    showToast((data && data.msg) || '排序同步失败', 'error');
+                    await loadSheets();
+                    return;
+                }
+            }
+            renderGrid();
+            showToast('排序已更新', 'success');
+        }
+
+        async function moveUp(index) {
+            if (index === 0) return;
+            await swapAndSave(index, index - 1);
+        }
+
+        async function moveDown(index) {
+            if (index === sheets.length - 1) return;
+            await swapAndSave(index, index + 1);
+        }
+
+        async function swapAndSave(idx1, idx2) {
+            await reorderAndSync(idx1, idx2);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/web/login.html';
+        }
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fabUpload.addEventListener('click', () => fileInput.click());
+        logoutBtn.addEventListener('click', logout);
+        previewClose.addEventListener('click', closePreview);
+        previewModal.addEventListener('click', (e) => {
+            if (e.target === previewModal) {
+                closePreview();
+            }
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && previewModal.classList.contains('open')) {
+                closePreview();
+            }
+        });
+
+        loadSheets();
+    </script>
+</body>
+</html>
