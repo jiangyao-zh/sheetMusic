@@ -45,21 +45,23 @@ type LogConfig struct {
 
 // Load 负责从环境变量中加载配置并填充默认值。
 func Load() *Config {
-	// 尝试读取.env文件，若不存在则继续使用系统环境变量。
-	_ = godotenv.Load()
+	// 优先从项目根目录加载 .env 文件（manager 的上一级目录）
+	_ = godotenv.Load("../.env")
+	// 如果根目录没有，尝试当前目录的 .env 文件
+	_ = godotenv.Load(".env")
 
 	return &Config{
 		App: AppConfig{
-			Name: getEnv("APP_NAME", "gin-template"),
-			Env:  getEnv("APP_ENV", "local"),
+			Name: getEnv("APP_NAME", "sheet-music-manager"),
+			Env:  getEnv("APP_ENV", "production"),
 		},
 		Server: ServerConfig{
 			Port:    getEnv("SERVER_PORT", "8080"),
-			GinMode: getEnv("GIN_MODE", "debug"),
+			GinMode: getEnv("GIN_MODE", "release"),
 		},
 		Database: DatabaseConfig{
 			Driver: getEnv("DB_DRIVER", "mysql"),
-			DSN:    getEnv("DATABASE_DSN", "music:iFiKkEPXw7tcncPF@tcp(43.142.45.253:3306)/music?charset=utf8mb4&parseTime=True&loc=Local"),
+			DSN:    getEnv("DATABASE_DSN", "username:password@tcp(host:3306)/database?charset=utf8mb4&parseTime=True&loc=Local"),
 		},
 		Log: LogConfig{
 			Level: getEnv("LOG_LEVEL", "info"),

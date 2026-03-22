@@ -2,9 +2,6 @@ package sheet
 
 import (
 	"errors"
-	"image"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"mime/multipart"
 	"os"
@@ -13,7 +10,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/nfnt/resize"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -125,29 +121,8 @@ func (s *serviceImpl) UploadSheet(file *multipart.FileHeader, userID int) (*Shee
 		return nil, err
 	}
 
-	src.Seek(0, 0)
-	var img image.Image
-	if ext == ".png" {
-		img, err = png.Decode(src)
-	} else {
-		img, err = jpeg.Decode(src)
-	}
-	if err == nil && img != nil {
-		m := resize.Thumbnail(260, 260, img, resize.Lanczos3)
-		out, err := os.Create(thumbPath)
-		if err == nil {
-			defer out.Close()
-			if ext == ".png" {
-				png.Encode(out, m)
-			} else {
-				jpeg.Encode(out, m, &jpeg.Options{Quality: 92})
-			}
-		} else {
-			thumbPath = filePath
-		}
-	} else {
-		thumbPath = filePath
-	}
+	// 缩略图直接使用原图，不压缩，保持清晰度
+	thumbPath = filePath
 
 	sheet := &Sheet{
 		Title:        title,
@@ -214,7 +189,7 @@ func (s *serviceImpl) ListExternal() ([]SheetExternal, error) {
 		res = append(res, SheetExternal{
 			ID:         sheet.ID,
 			Title:      sheet.Title,
-			ThumbUrl:   sheet.ThumbPath,
+			ThumbUrl:   sheet.FilePath,
 			UploadTime: sheet.CreatedAt,
 		})
 	}

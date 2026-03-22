@@ -1,0 +1,13 @@
+{
+  "name": "sheet-music-tv",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UniApp Android TV sheet music viewer (offline)",
+  "scripts": {
+    "config:generate": "node scripts/generate-config.js",
+    "generate:sheets": "node tools/generate-sheets.mjs --input sheet-source --mode copy",
+    "generate:sheets:direct": "node tools/generate-sheets.mjs --input sheet-source --mode direct",
+    "skill:import-sheets": "node skills/sheet-image-to-pages/scripts/import-sheets.mjs --input sheet-source --mode copy",
+    "control:server": "node tools/control-server.mjs"
+  }
+}

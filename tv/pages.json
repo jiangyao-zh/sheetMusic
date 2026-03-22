@@ -1,0 +1,31 @@
+{
+  "pages": [
+    {
+      "path": "pages/score-list/index",
+      "style": {
+        "navigationBarTitleText": "乐谱列表",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/score-preview/index",
+      "style": {
+        "navigationBarTitleText": "乐谱预览",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/mobile-manage/index",
+      "style": {
+        "navigationBarTitleText": "手机管理台",
+        "navigationStyle": "custom"
+      }
+    }
+  ],
+  "globalStyle": {
+    "backgroundColor": "#0f1115",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "Sheet Music TV",
+    "navigationBarBackgroundColor": "#0f1115"
+  }
+}
