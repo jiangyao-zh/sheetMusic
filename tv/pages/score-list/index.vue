@@ -4,14 +4,18 @@
 
     <view class="header">
       <view class="status-row">
-        <text class="status-left">{{ statusTime }}</text>
+        <text class="status-left">{{ statusTime }} <text class="status-date-cn">{{ chineseDate }}</text></text>
         <text class="status-right">在线 · {{ displayImages.length }} 张</text>
       </view>
       <view class="title-row">
         <view class="accent"></view>
         <text class="title">乐谱列表</text>
         <text class="title-tag">TV</text>
+        <view class="sync-btn" :class="{ 'sync-btn-focused': syncBtnFocused }">
+          <text class="sync-text">{{ syncStatusText }}</text>
+        </view>
       </view>
+      <text v-if="syncProgress" class="sync-progress">{{ syncProgress }}</text>
     </view>
 
     <view v-if="displayImages.length === 0" class="empty">
@@ -25,10 +29,8 @@
           :key="item.id"
           :id="`score-card-${index}`"
           class="card"
-          :class="{ 'is-selected': index === focusedIndex }"
+          :class="{ 'is-selected': index === focusedIndex && !syncBtnFocused }"
           :style="{ width: itemSize + 'px' }"
-          @click="openByIndex(index)"
-          @tap="openByIndex(index)"
         >
           <text class="card-title">{{ item.title || `乐谱 ${index + 1}` }}</text>
           <image class="thumb" :src="item.src" mode="aspectFit" :style="{ width: (itemSize - 12) + 'px', height: (itemSize - 12) + 'px' }" />
@@ -52,6 +54,7 @@
 import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getApiHost } from '@/src/config/api';
+import { syncAllImages, getLocalSyncedImages, needsFirstSync } from '@/src/utils/syncImages';
 
 const KEY_MAP = {
   13: 'enter',
@@ -113,7 +116,11 @@ export default {
       listenersBound: false,
       lastRemoteKey: '',
       lastRemoteAt: 0,
-      lastRemoteType: ''
+      lastRemoteType: '',
+      syncBtnFocused: false,
+      isSyncing: false,
+      syncProgress: '',
+      modalVisible: false
     };
   },
   computed: {
@@ -159,6 +166,19 @@ export default {
       const m = String(date.getMinutes()).padStart(2, '0');
       const day = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][date.getDay()];
       return `${h}:${m} ${day}`;
+    },
+    chineseDate() {
+      const date = new Date(this.now);
+      const months = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      const month = months[date.getMonth()];
+      const day = date.getDate();
+      const weekday = days[date.getDay()];
+      return `${month}月${day}日 星期${weekday}`;
+    },
+    syncStatusText() {
+      if (this.isSyncing) return '同步中...';
+      return '同步';
     }
   },
   onShow() {
@@ -170,10 +190,11 @@ export default {
   },
   mounted() {
     this.initLayout();
-    this.reloadBase();
+    this.loadData();
     this.initSession();
     this.connectControlChannel();
     this.startClock();
+    this.initAppStartTime();
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', this.initLayout);
     }
@@ -240,6 +261,13 @@ export default {
         // ignore
       }
     },
+    initAppStartTime() {
+      const stored = uni.getStorageSync('app_start_time');
+      if (!stored) {
+        const now = Date.now();
+        uni.setStorageSync('app_start_time', now);
+      }
+    },
     startClock() {
       this.now = Date.now();
       if (this.clockTimer) clearInterval(this.clockTimer);
@@ -247,11 +275,86 @@ export default {
         this.now = Date.now();
       }, 30000);
     },
-    async reloadBase() {
-      const localSheets = getFlatImagesFromStatic();
-      this.baseImages = await getMergedSheetList(localSheets);
-      if (!this.orderIds.length) {
-        this.orderIds = this.baseImages.map((x) => x.id);
+    async loadData() {
+      const syncedImages = getLocalSyncedImages();
+      if (syncedImages && syncedImages.length) {
+        this.baseImages = syncedImages;
+        if (!this.orderIds.length) {
+          this.orderIds = syncedImages.map((x) => x.id);
+        }
+      } else {
+        // 无本地数据时，从远程API加载
+        const localSheets = getFlatImagesFromStatic();
+        this.baseImages = await getMergedSheetList(localSheets);
+        if (!this.orderIds.length) {
+          this.orderIds = this.baseImages.map((x) => x.id);
+        }
+      }
+    },
+    resetFocusState() {
+      console.log('[resetFocusState] 重置焦点状态前:', {
+        syncBtnFocused: this.syncBtnFocused,
+        focusedIndex: this.focusedIndex,
+        modalVisible: this.modalVisible
+      });
+      this.syncBtnFocused = false;
+      this.focusedIndex = 0;
+      this.modalVisible = false;
+      console.log('[resetFocusState] 重置焦点状态后:', {
+        syncBtnFocused: this.syncBtnFocused,
+        focusedIndex: this.focusedIndex,
+        modalVisible: this.modalVisible
+      });
+    },
+    showSyncConfirm() {
+      console.log('[showSyncConfirm] 点击同步按钮，当前状态:', {
+        syncBtnFocused: this.syncBtnFocused,
+        focusedIndex: this.focusedIndex,
+        currentItem: this.displayImages[this.focusedIndex]
+      });
+      this.syncBtnFocused = false;
+      this.modalVisible = true;
+      this.unbindKeys();
+      uni.showModal({
+        title: '同步确认',
+        content: '是否同步所有乐谱图片到本地？',
+        confirmText: '同步',
+        cancelText: '取消',
+        success: (res) => {
+          this.resetFocusState();
+          this.bindKeys();
+          if (res.confirm) {
+            this.doSync();
+          }
+        },
+        fail: () => {
+          this.resetFocusState();
+          this.bindKeys();
+        }
+      });
+    },
+    async doSync() {
+      if (this.isSyncing) return;
+      this.isSyncing = true;
+      this.syncProgress = '正在同步...';
+      try {
+        const images = await syncAllImages((progress) => {
+          this.syncProgress = `同步中 ${progress.current}/${progress.total}: ${progress.title}`;
+        });
+        if (images.length) {
+          this.baseImages = images;
+          this.orderIds = images.map((x) => x.id);
+          this.focusedIndex = 0;
+          this.syncBtnFocused = false;
+        }
+        this.syncProgress = '';
+        uni.showToast({ title: `同步完成，共${images.length}张`, icon: 'success', duration: 1500 });
+      } catch (e) {
+        console.error('[Sync] 同步失败:', e);
+        this.syncProgress = '';
+        uni.showToast({ title: '同步失败', icon: 'none', duration: 1500 });
+      } finally {
+        this.isSyncing = false;
       }
     },
     initSession() {
@@ -300,7 +403,32 @@ export default {
       const rows = Math.ceil(total / cols);
       const row = Math.floor(this.focusedIndex / cols);
       const col = this.focusedIndex % cols;
-      
+
+      console.log('[moveFocus] 移动焦点前:', {
+        key,
+        syncBtnFocused: this.syncBtnFocused,
+        focusedIndex: this.focusedIndex,
+        currentItem: this.displayImages[this.focusedIndex]
+      });
+
+      // 向上键：如果在第一行，选中同步按钮
+      if (key === 'up' && row === 0) {
+        this.syncBtnFocused = true;
+        console.log('[moveFocus] 选中同步按钮');
+        return;
+      }
+      // 向下键：如果同步按钮被选中，取消选中并回到列表
+      if (key === 'down' && this.syncBtnFocused) {
+        this.syncBtnFocused = false;
+        console.log('[moveFocus] 取消同步按钮，回到列表 index=', this.focusedIndex);
+        return;
+      }
+      // 同步按钮被选中时，左右键无效
+      if (this.syncBtnFocused) {
+        console.log('[moveFocus] 同步按钮选中中，忽略左右键');
+        return;
+      }
+
       let nextRow = row;
       let nextCol = col;
       if (key === 'left') nextCol = Math.max(0, col - 1);
@@ -310,34 +438,68 @@ export default {
       let next = nextRow * cols + nextCol;
       if (next >= total) next = total - 1;
       this.focusedIndex = next;
+
+      console.log('[moveFocus] 移动焦点后:', {
+        focusedIndex: this.focusedIndex,
+        nextItem: this.displayImages[this.focusedIndex]
+      });
     },
     openFocused() {
       const item = this.displayImages[this.focusedIndex];
-      if (!item) return;
+      console.log('[openFocused] 打开详情页:', {
+        syncBtnFocused: this.syncBtnFocused,
+        focusedIndex: this.focusedIndex,
+        item: item ? { id: item.id, title: item.title, src: item.src } : null,
+        totalImages: this.displayImages.length
+      });
+      if (!item) {
+        console.error('[openFocused] 错误：未找到对应的乐谱项');
+        return;
+      }
       this.unbindKeys();
       uni.setStorageSync('sheet_flat_list', JSON.stringify(this.displayImages));
       uni.navigateTo({
         url: `/pages/score-preview/index?index=${this.focusedIndex}`
       });
     },
-    openByIndex(index) {
-      this.focusedIndex = index;
-      this.openFocused();
-    },
     onKeyDown(evt) {
-      if (evt && evt.repeat) return;
       const key = resolveKey(evt);
+      console.log('[onKeyDown] 按键事件触发:', {
+        key,
+        repeat: evt && evt.repeat,
+        modalVisible: this.modalVisible,
+        focusedIndex: this.focusedIndex,
+        syncBtnFocused: this.syncBtnFocused
+      });
+      
+      if (this.modalVisible) return;
+      if (evt && evt.repeat) return;
       if (!key) return;
       const now = Date.now();
       const evtType = (evt && evt.type) || 'native';
-      if (key === this.lastRemoteKey && now - this.lastRemoteAt < 140) return;
-      if (evtType === this.lastRemoteType && now - this.lastRemoteAt < 60) return;
+      if (key === this.lastRemoteKey && now - this.lastRemoteAt < 140) {
+        console.log('[onKeyDown] 防抖过滤: 相同按键间隔过短');
+        return;
+      }
+      if (evtType === this.lastRemoteType && now - this.lastRemoteAt < 60) {
+        console.log('[onKeyDown] 防抖过滤: 相同事件类型间隔过短');
+        return;
+      }
       this.lastRemoteKey = key;
       this.lastRemoteAt = now;
       this.lastRemoteType = evtType;
       if (key === 'enter') {
         evt.preventDefault && evt.preventDefault();
-        this.openFocused();
+        console.log('[onKeyDown] Enter键按下，判断状态:', {
+          syncBtnFocused: this.syncBtnFocused,
+          focusedIndex: this.focusedIndex,
+          willTrigger: this.syncBtnFocused ? 'showSyncConfirm' : 'openFocused'
+        });
+        if (this.syncBtnFocused) {
+          this.showSyncConfirm();
+        } else {
+          this.openFocused();
+        }
         return;
       }
       if (key === 'left' || key === 'right' || key === 'up' || key === 'down') {
@@ -406,6 +568,47 @@ export default {
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 1px;
+}
+.sync-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, rgba(185, 174, 230, 0.2), rgba(185, 174, 230, 0.1));
+  border: 2px solid rgba(185, 174, 230, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(185, 174, 230, 0.15);
+  transition: all 0.3s ease;
+}
+.sync-btn-focused {
+  background: linear-gradient(135deg, rgba(241, 198, 77, 0.25), rgba(241, 198, 77, 0.15)) !important;
+  border-color: #f1c64d !important;
+  box-shadow: 0 4px 12px rgba(241, 198, 77, 0.3) !important;
+  transform: translateY(-1px);
+}
+.sync-text {
+  font-size: 12px;
+  color: #d4deeb;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.status-date-cn {
+  margin-left: 12px;
+  color: #9ca7bb;
+  font-size: 9px;
+  font-weight: 400;
+}
+.sync-progress {
+  display: block;
+  font-size: 10px;
+  color: #42ef94;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 .empty { margin-top: 16px; color: #d8cbff; font-size: 15px; }
 .list {
@@ -480,23 +683,27 @@ export default {
   right: 42px;
   bottom: 28px;
   z-index: 99;
-  width: 220px;
+  width: 240px;
   border: 3px solid #93a4bc;
   border-radius: 18px;
   padding: 14px;
   background: rgba(20, 25, 35, 0.86);
   transform: scale(0.28);
   transform-origin: right bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .manage-label {
   display: block;
   font-size: 22px;
   color: #d4deeb;
   margin-bottom: 8px;
+  text-align: center;
 }
 .qr {
-  width: 192px;
-  height: 192px;
+  width: 211.2px;
+  height: 211.2px;
   background: #fff;
   border-radius: 10px;
 }

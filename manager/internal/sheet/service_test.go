@@ -64,18 +64,19 @@ func TestService_SheetOperations(t *testing.T) {
 	repo := NewMockRepository()
 	svc := NewService(repo)
 
-	repo.CreateSheet(&Sheet{Title: "test1", FilePath: "/test1.jpg", ThumbPath: "/thumb1.jpg", UploadUserID: 1})
+	repo.CreateSheet(&Sheet{Title: "test1", FilePath: "/test1.jpg", ThumbPath: "/thumb1.jpg", BPM: 80, UploadUserID: 1})
 
 	sheets, err := svc.ListSheets("")
 	assert.NoError(t, err)
 	assert.Len(t, sheets, 1)
 
-	err = svc.RenameSheet(sheets[0].ID, "new_title")
+	err = svc.UpdateSheet(sheets[0].ID, "new_title", 96)
 	assert.NoError(t, err)
 	assert.True(t, repo.SheetTitle["new_title"])
+	assert.Equal(t, 96, repo.Sheets[sheets[0].ID].BPM)
 
-	repo.CreateSheet(&Sheet{Title: "existing_title", FilePath: "/test2.jpg", ThumbPath: "/thumb2.jpg", UploadUserID: 1})
-	err = svc.RenameSheet(sheets[0].ID, "existing_title")
+	repo.CreateSheet(&Sheet{Title: "existing_title", FilePath: "/test2.jpg", ThumbPath: "/thumb2.jpg", BPM: 88, UploadUserID: 1})
+	err = svc.UpdateSheet(sheets[0].ID, "existing_title", 88)
 	assert.Error(t, err)
 
 	err = svc.UpdateSortOrder(sheets[0].ID, 5)
@@ -90,4 +91,6 @@ func TestService_SheetOperations(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, extSheets, 1)
 	assert.Equal(t, "existing_title", extSheets[0].Title)
+	assert.Equal(t, 88, extSheets[0].BPM)
+	assert.Equal(t, "/test2.jpg", extSheets[0].ThumbUrl)
 }

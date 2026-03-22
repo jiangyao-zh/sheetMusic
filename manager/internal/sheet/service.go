@@ -20,7 +20,7 @@ type Service interface {
 	UploadSheet(file *multipart.FileHeader, userID int) (*Sheet, error)
 	ListSheets(keyword string) ([]*Sheet, error)
 	UpdateSortOrder(id int, order int) error
-	RenameSheet(id int, title string) error
+	UpdateSheet(id int, title string, bpm int) error
 	DeleteSheet(id int) error
 	ListExternal() ([]SheetExternal, error)
 }
@@ -128,6 +128,7 @@ func (s *serviceImpl) UploadSheet(file *multipart.FileHeader, userID int) (*Shee
 		Title:        title,
 		FilePath:     "/" + filePath,
 		ThumbPath:    "/" + thumbPath,
+		BPM:          80,
 		UploadUserID: userID,
 	}
 	if err := s.repo.CreateSheet(sheet); err != nil {
@@ -147,15 +148,24 @@ func (s *serviceImpl) UpdateSortOrder(id int, order int) error {
 	return s.repo.UpdateSheetSort(id, order)
 }
 
-func (s *serviceImpl) RenameSheet(id int, title string) error {
-	exists, err := s.repo.CheckTitleExists(title)
+func (s *serviceImpl) UpdateSheet(id int, title string, bpm int) error {
+	current, err := s.repo.GetSheetByID(id)
 	if err != nil {
 		return err
 	}
-	if exists {
-		return errors.New("title already exists")
+	if current == nil {
+		return errors.New("sheet not found")
 	}
-	return s.repo.UpdateSheetTitle(id, title)
+	if current.Title != title {
+		exists, checkErr := s.repo.CheckTitleExists(title)
+		if checkErr != nil {
+			return checkErr
+		}
+		if exists {
+			return errors.New("title already exists")
+		}
+	}
+	return s.repo.UpdateSheet(id, title, bpm)
 }
 
 func (s *serviceImpl) DeleteSheet(id int) error {
@@ -190,6 +200,7 @@ func (s *serviceImpl) ListExternal() ([]SheetExternal, error) {
 			ID:         sheet.ID,
 			Title:      sheet.Title,
 			ThumbUrl:   sheet.FilePath,
+			BPM:        sheet.BPM,
 			UploadTime: sheet.CreatedAt,
 		})
 	}

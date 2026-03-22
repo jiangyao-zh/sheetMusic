@@ -227,8 +227,8 @@
         .card-head {
             padding: 0.62rem 0.68rem;
             display: flex;
-            align-items: center;
-            gap: 0.42rem;
+            align-items: flex-start;
+            gap: 0.5rem;
             border-bottom: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
         }
 
@@ -249,14 +249,62 @@
 
         .card-title {
             margin: 0;
-            font-size: 0.94rem;
+            font-size: 0.84rem;
             font-weight: 650;
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.3rem;
+            cursor: text;
+        }
+
+        .title-main {
+            display: block;
+            width: 100%;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            cursor: text;
+        }
+
+        .title-bpm {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.08rem 0.36rem;
+            border-radius: 999px;
+            font-size: 0.64rem;
+            font-weight: 600;
+            color: var(--brand);
+            background: color-mix(in oklch, var(--brand) 12%, transparent);
+            border: 1px solid color-mix(in oklch, var(--brand) 24%, var(--border));
+            vertical-align: middle;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-icon.view {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-icon.view::before {
+            content: '';
+            width: 16px;
+            height: 10px;
+            border: 2px solid currentColor;
+            border-radius: 12px / 8px;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .btn-icon.view::after {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
         }
 
         .rename-input {
@@ -398,12 +446,12 @@
             position: fixed;
             inset: 0;
             z-index: 200;
-            background: color-mix(in oklch, var(--bg) 70%, transparent);
-            backdrop-filter: blur(1px);
+            background: linear-gradient(180deg, oklch(12% 0.02 250 / 0.7), oklch(8% 0.015 250 / 0.82));
+            backdrop-filter: blur(10px);
             display: none;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 1.2rem;
         }
 
         .preview-modal.open {
@@ -411,25 +459,46 @@
         }
 
         .preview-panel {
-            width: min(92vw, 920px);
-            max-height: 90vh;
-            border-radius: 14px;
+            width: min(94vw, 1080px);
+            max-height: 92vh;
+            border-radius: 24px;
             overflow: hidden;
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            box-shadow: var(--shadow-sm);
+            border: 1px solid color-mix(in oklch, var(--border) 82%, white 8%);
+            background: linear-gradient(180deg, color-mix(in oklch, var(--bg-elevated) 96%, white 4%), color-mix(in oklch, var(--bg) 88%, var(--bg-elevated) 12%));
+            box-shadow: 0 28px 80px oklch(8% 0.01 250 / 0.42);
             display: flex;
             flex-direction: column;
         }
 
         .preview-head {
-            min-height: 48px;
-            padding: 0.55rem 0.8rem;
+            min-height: 64px;
+            padding: 0.9rem 1.1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
             font-weight: 650;
+            background: color-mix(in oklch, var(--bg-elevated) 92%, var(--brand) 8%);
+        }
+
+        .preview-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+            min-width: 0;
+        }
+
+        .preview-title-text {
+            font-size: 1rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-subtitle {
+            color: var(--text-muted);
+            font-size: 0.82rem;
         }
 
         .preview-close {
@@ -454,16 +523,119 @@
             flex: 1;
             display: grid;
             place-items: center;
-            padding: 0.6rem;
+            padding: 1rem;
             overflow: auto;
+            background:
+                radial-gradient(circle at top, color-mix(in oklch, var(--brand) 16%, transparent), transparent 34%),
+                color-mix(in oklch, var(--bg) 92%, black 8%);
         }
 
         .preview-image {
             max-width: 100%;
-            max-height: calc(90vh - 72px);
+            max-height: calc(92vh - 120px);
             object-fit: contain;
             display: block;
-            border-radius: 10px;
+            border-radius: 18px;
+            box-shadow: 0 20px 60px oklch(12% 0.02 250 / 0.32);
+            background: white;
+        }
+
+        .edit-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 210;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: oklch(10% 0.01 250 / 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .edit-modal.open {
+            display: flex;
+        }
+
+        .edit-panel {
+            width: min(92vw, 460px);
+            border-radius: 22px;
+            border: 1px solid color-mix(in oklch, var(--border) 82%, white 8%);
+            background: var(--bg-elevated);
+            box-shadow: 0 24px 80px oklch(12% 0.02 250 / 0.3);
+            overflow: hidden;
+        }
+
+        .edit-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.1rem 0.85rem;
+            border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+        }
+
+        .edit-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .edit-title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .edit-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .edit-body {
+            padding: 1.1rem;
+            display: grid;
+            gap: 0.95rem;
+        }
+
+        .form-field {
+            display: grid;
+            gap: 0.42rem;
+        }
+
+        .form-label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-input {
+            width: 100%;
+            min-height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 0.72rem 0.82rem;
+            font: inherit;
+            color: var(--text);
+            background: color-mix(in oklch, var(--bg-elevated) 92%, var(--text) 8%);
+            outline: none;
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 4px var(--focus-ring);
+        }
+
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.7rem;
+            padding: 0 1.1rem 1.1rem;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text);
         }
 
         .toast.success {
@@ -501,8 +673,8 @@
                 height: 70px;
             }
 
-            .btn-primary,
-            .btn-ghost {
+            .header-actions .btn-primary,
+            .header-actions .btn-ghost {
                 display: none;
             }
 
@@ -553,11 +725,39 @@
     <div class="preview-modal" id="previewModal" role="dialog" aria-modal="true" aria-label="乐谱大图预览">
         <div class="preview-panel">
             <div class="preview-head">
-                <span id="previewTitle">乐谱预览</span>
+                <div class="preview-title-group">
+                    <span id="previewTitle" class="preview-title-text">乐谱预览</span>
+                    <span id="previewSubtitle" class="preview-subtitle">查看原始图片与节拍信息</span>
+                </div>
                 <button class="preview-close" id="previewClose" type="button" aria-label="关闭预览">×</button>
             </div>
             <div class="preview-image-wrap">
                 <img id="previewImage" class="preview-image" alt="乐谱大图">
+            </div>
+        </div>
+    </div>
+    <div class="edit-modal" id="editModal" role="dialog" aria-modal="true" aria-label="编辑乐谱信息">
+        <div class="edit-panel">
+            <div class="edit-head">
+                <div class="edit-title-wrap">
+                    <span class="edit-title">编辑乐谱信息</span>
+                    <span class="edit-subtitle">可同时修改名称与 BPM</span>
+                </div>
+                <button class="preview-close" id="editClose" type="button" aria-label="关闭编辑">×</button>
+            </div>
+            <div class="edit-body">
+                <label class="form-field">
+                    <span class="form-label">乐谱名称</span>
+                    <input id="editTitleInput" class="form-input" type="text" maxlength="255" placeholder="请输入乐谱名称">
+                </label>
+                <label class="form-field">
+                    <span class="form-label">BPM</span>
+                    <input id="editBeatInput" class="form-input" type="number" min="20" max="300" step="1" inputmode="numeric" placeholder="请输入 20-300 之间的数字">
+                </label>
+            </div>
+            <div class="edit-actions">
+                <button class="btn btn-secondary" id="editCancel" type="button">取消</button>
+                <button class="btn btn-primary" id="editSave" type="button">保存</button>
             </div>
         </div>
     </div>
@@ -577,7 +777,14 @@
         const previewModal = document.getElementById('previewModal');
         const previewImage = document.getElementById('previewImage');
         const previewTitle = document.getElementById('previewTitle');
+        const previewSubtitle = document.getElementById('previewSubtitle');
         const previewClose = document.getElementById('previewClose');
+        const editModal = document.getElementById('editModal');
+        const editClose = document.getElementById('editClose');
+        const editCancel = document.getElementById('editCancel');
+        const editSave = document.getElementById('editSave');
+        const editTitleInput = document.getElementById('editTitleInput');
+        const editBeatInput = document.getElementById('editBeatInput');
 
         const apiFetch = async (url, options = {}) => {
             options.headers = {
@@ -616,8 +823,19 @@
         let touchDragActive = false;
         let touchStartX = 0;
         let touchStartY = 0;
+        let editingSheetId = null;
         const TOUCH_DRAG_DELAY = 220;
         const TOUCH_MOVE_CANCEL = 10;
+
+        function getBpm(sheet) {
+            const value = Number(sheet && sheet.bpm);
+            return Number.isFinite(value) && value >= 20 ? value : 80;
+        }
+
+        function formatDisplayTitle(sheet) {
+            const title = sheet.title || '未命名乐谱';
+            return `${title}（${getBpm(sheet)} BPM）`;
+        }
 
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
@@ -729,8 +947,10 @@
 
                 const title = document.createElement('p');
                 title.className = 'card-title';
-                title.textContent = sheet.title;
-                title.title = sheet.title;
+                title.innerHTML = `<span class="title-main"></span><span class="title-bpm"></span>`;
+                title.querySelector('.title-main').textContent = sheet.title;
+                title.querySelector('.title-bpm').textContent = `${getBpm(sheet)} BPM`;
+                title.title = formatDisplayTitle(sheet);
 
                 const renameBtn = document.createElement('button');
                 renameBtn.type = 'button';
@@ -774,10 +994,9 @@
 
                 const viewBtn = document.createElement('button');
                 viewBtn.type = 'button';
-                viewBtn.className = 'btn-icon';
+                viewBtn.className = 'btn-icon view';
                 viewBtn.title = '查看';
                 viewBtn.setAttribute('aria-label', '查看');
-                viewBtn.textContent = '▢';
                 viewBtn.addEventListener('click', () => openPreview(sheet));
 
                 actions.append(upBtn, downBtn, viewBtn, delBtn);
@@ -879,15 +1098,12 @@
         async function renameSheet(id) {
             const current = sheets.find((item) => item.id === id);
             if (!current) return;
-            const inputTitle = window.prompt('请输入新的乐谱名称', current.title);
-            if (inputTitle === null) return;
-            const nextTitle = inputTitle.trim();
-            if (!nextTitle || nextTitle === current.title) return;
-            if (sheets.some((item) => item.id !== id && item.title === nextTitle)) {
-                showToast('名称已存在，请更换', 'error');
-                return;
-            }
-            await saveTitle(id, current.title, nextTitle);
+            editingSheetId = id;
+            editTitleInput.value = current.title || '';
+            editBeatInput.value = getBpm(current);
+            editModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            window.setTimeout(() => editTitleInput.focus(), 0);
         }
 
         function openPreview(sheet) {
@@ -896,7 +1112,8 @@
                 showToast('无可预览图片', 'error');
                 return;
             }
-            previewTitle.textContent = sheet.title || '乐谱预览';
+            previewTitle.textContent = formatDisplayTitle(sheet);
+            previewSubtitle.textContent = `原图预览 · BPM ${getBpm(sheet)}`;
             previewImage.src = imageUrl;
             previewImage.onerror = () => {
                 previewImage.src = createFallbackSvg();
@@ -911,54 +1128,17 @@
             document.body.style.overflow = '';
         }
 
-        function editTitle(el, id) {
-            if (el.querySelector('input')) return;
-
-            const oldTitle = el.innerText;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'rename-input';
-            input.value = oldTitle;
-            input.setAttribute('aria-label', '编辑乐谱名称');
-
-            let submitted = false;
-
-            const finishEdit = async (cancelled) => {
-                if (submitted) return;
-                submitted = true;
-
-                const nextTitle = input.value.trim();
-                if (cancelled || !nextTitle || nextTitle === oldTitle) {
-                    el.textContent = oldTitle;
-                    return;
-                }
-
-                await saveTitle(id, oldTitle, nextTitle);
-            };
-
-            input.addEventListener('blur', () => finishEdit(false));
-            input.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    input.blur();
-                }
-                if (event.key === 'Escape') {
-                    event.preventDefault();
-                    finishEdit(true);
-                }
-            });
-
-            el.textContent = '';
-            el.appendChild(input);
-            input.focus();
-            input.select();
+        function closeEditModal() {
+            editModal.classList.remove('open');
+            editingSheetId = null;
+            document.body.style.overflow = '';
         }
 
-        async function saveTitle(id, oldTitle, newTitle) {
+        async function saveTitle(id, oldTitle, newTitle, oldBpm, newBpm) {
             const data = await apiFetch(`/api/sheets/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: newTitle })
+                body: JSON.stringify({ title: newTitle, bpm: newBpm })
             });
 
             if (!data) return;
@@ -968,16 +1148,43 @@
             if (data.code === 200) {
                 if (current) {
                     current.title = newTitle;
+                    current.bpm = newBpm;
                 }
-                showToast('已更新名称', 'success');
+                showToast('已更新乐谱信息', 'success');
+                closeEditModal();
                 renderGrid();
             } else {
                 if (current) {
                     current.title = oldTitle;
+                    current.bpm = oldBpm;
                 }
-                showToast(data.msg || '重命名失败', 'error');
+                showToast(data.msg || '保存失败', 'error');
                 renderGrid();
             }
+        }
+
+        async function submitEditModal() {
+            const id = editingSheetId;
+            const current = sheets.find((item) => item.id === id);
+            if (!current) return;
+            const nextTitle = editTitleInput.value.trim();
+            const nextBpm = Number(editBeatInput.value);
+            if (!nextTitle) {
+                showToast('请输入乐谱名称', 'error');
+                editTitleInput.focus();
+                return;
+            }
+            if (!Number.isInteger(nextBpm) || nextBpm < 20 || nextBpm > 300) {
+                showToast('BPM 请输入 20-300 的整数', 'error');
+                editBeatInput.focus();
+                return;
+            }
+            if (sheets.some((item) => item.id !== id && item.title === nextTitle)) {
+                showToast('名称已存在，请更换', 'error');
+                editTitleInput.focus();
+                return;
+            }
+            await saveTitle(id, current.title, nextTitle, getBpm(current), nextBpm);
         }
 
         function handleDragStart(e) {
@@ -1140,6 +1347,14 @@
         fabUpload.addEventListener('click', () => fileInput.click());
         logoutBtn.addEventListener('click', logout);
         previewClose.addEventListener('click', closePreview);
+        editClose.addEventListener('click', closeEditModal);
+        editCancel.addEventListener('click', closeEditModal);
+        editSave.addEventListener('click', submitEditModal);
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
         previewModal.addEventListener('click', (e) => {
             if (e.target === previewModal) {
                 closePreview();
@@ -1148,6 +1363,13 @@
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && previewModal.classList.contains('open')) {
                 closePreview();
+            }
+            if (e.key === 'Escape' && editModal.classList.contains('open')) {
+                closeEditModal();
+            }
+            if (e.key === 'Enter' && editModal.classList.contains('open')) {
+                e.preventDefault();
+                submitEditModal();
             }
         });
 

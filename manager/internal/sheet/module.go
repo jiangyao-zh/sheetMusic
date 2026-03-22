@@ -14,6 +14,9 @@ func InitModule(r *gin.Engine, cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
+	if err := ensureBPMColumn(db); err != nil {
+		log.Fatalf("failed to prepare sheet schema: %v", err)
+	}
 
 	repo := NewRepository(db)
 	svc := NewService(repo)
@@ -22,4 +25,11 @@ func InitModule(r *gin.Engine, cfg *config.Config) {
 	RegisterRoutes(r, handler)
 	r.Static("/public/uploads", "./public/uploads")
 	r.Static("/web", "./web")
+}
+
+func ensureBPMColumn(db *gorm.DB) error {
+	if db.Migrator().HasColumn(&Sheet{}, "bpm") {
+		return nil
+	}
+	return db.Exec("ALTER TABLE sheets ADD COLUMN bpm INT NOT NULL DEFAULT 80 AFTER thumb_path").Error
 }

@@ -17,6 +17,7 @@ type Sheet struct {
 	Title        string    `json:"title" gorm:"type:varchar(255);not null;index:,class:FULLTEXT"`
 	FilePath     string    `json:"file_path" gorm:"type:varchar(500);not null"`
 	ThumbPath    string    `json:"thumb_path" gorm:"type:varchar(500);not null"`
+	BPM          int       `json:"bpm" gorm:"column:bpm;type:int;not null;default:80"`
 	SortOrder    int       `json:"sort_order" gorm:"type:int;not null;default:0;index"`
 	UploadUserID int       `json:"upload_user_id" gorm:"type:int;not null"`
 	CreatedAt    time.Time `json:"created_at" gorm:"autoCreateTime"`
@@ -38,13 +39,15 @@ type SortSheetRequest struct {
 	SortOrder *int `json:"sort_order" binding:"required,gte=0"`
 }
 
-type RenameSheetRequest struct {
+type UpdateSheetRequest struct {
 	Title string `json:"title" binding:"required"`
+	BPM   *int   `json:"bpm" binding:"required,gte=20,lte=300"`
 }
 
 type SheetExternal struct {
 	ID         int       `json:"id"`
 	Title      string    `json:"title"`
 	ThumbUrl   string    `json:"thumbUrl"`
+	BPM        int       `json:"bpm"`
 	UploadTime time.Time `json:"uploadTime"`
 }

@@ -129,13 +129,18 @@ func (h *Handler) RenameSheet(c *gin.Context) {
 		return
 	}
 
-	var req RenameSheetRequest
+	var req UpdateSheetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, Response{Code: 400, Msg: "invalid parameters"})
 		return
 	}
 
-	if err := h.svc.RenameSheet(id, req.Title); err != nil {
+	if req.BPM == nil {
+		c.JSON(http.StatusBadRequest, Response{Code: 400, Msg: "invalid parameters"})
+		return
+	}
+
+	if err := h.svc.UpdateSheet(id, req.Title, *req.BPM); err != nil {
 		c.JSON(http.StatusInternalServerError, Response{Code: 500, Msg: err.Error()})
 		return
 	}

@@ -13,6 +13,12 @@
     </view>
 
     <view class="right-section">
+      <view class="time-info-block">
+        <text class="current-time">{{ currentTimeWithSeconds }}</text>
+        <text class="current-date-cn">{{ chineseDateText }}</text>
+        <text class="elapsed-time">用时 {{ elapsedTime }}</text>
+      </view>
+      
       <view class="info-block">
         <text class="title">乐谱详情</text>
         <text class="sub-meta">{{ currentTitle }}</text>
@@ -72,6 +78,7 @@
 <script>
 import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
+import { getLocalSyncedImages } from '@/src/utils/syncImages';
 import MetronomePanel from '@/components/MetronomePanel.vue';
 
 const KEY_MAP = {
@@ -133,7 +140,10 @@ export default {
       appKeyHandler: null,
       panelCloseLockUntil: 0,
       lastNavAt: 0,
-      navBlockUntil: 0
+      navBlockUntil: 0,
+      now: Date.now(),
+      appStartTime: 0,
+      timeClockTimer: null
     };
   },
   computed: {
@@ -148,6 +158,32 @@ export default {
     },
     currentBeatLabel() {
       return this.currentBeat > 0 ? this.currentBeat : 1;
+    },
+    currentTimeWithSeconds() {
+      const date = new Date(this.now);
+      const h = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      const s = String(date.getSeconds()).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    },
+    chineseDateText() {
+      const date = new Date(this.now);
+      const months = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      const month = months[date.getMonth()];
+      const day = date.getDate();
+      const weekday = days[date.getDay()];
+      return `${month}月${day}日 星期${weekday}`;
+    },
+    elapsedTime() {
+      const elapsed = Math.floor((this.now - this.appStartTime) / 1000);
+      const hours = Math.floor(elapsed / 3600);
+      const minutes = Math.floor((elapsed % 3600) / 60);
+      const seconds = elapsed % 60;
+      if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+      return `${minutes}:${String(seconds).padStart(2, '0')}`;
     },
     currentImage() {
       const item = this.images[this.pageIndex];
@@ -164,19 +200,33 @@ export default {
       try { this.images = JSON.parse(raw); } catch (e) { this.images = []; }
     }
     if (!this.images.length) {
-      const localSheets = getFlatImagesFromStatic();
-      this.images = await getMergedSheetList(localSheets);
+      // 优先读取本地同步数据
+      const syncedImages = getLocalSyncedImages();
+      if (syncedImages && syncedImages.length) {
+        this.images = syncedImages;
+      } else {
+        const localSheets = getFlatImagesFromStatic();
+        this.images = await getMergedSheetList(localSheets);
+      }
     }
     this.pageIndex = Math.max(0, Math.min(this.images.length - 1, Number((query && query.index) || 0)));
+    this.loadCurrentBpm();
     this.initAudio();
+    this.loadAppStartTime();
   },
   onBackPress() {
+    const now = Date.now();
     if (this.panelVisible) {
       this.closePanelSafely();
       return true;
     }
+    // 面板刚关闭后的保护期内，阻止返回
+    if (now < this.panelCloseLockUntil) {
+      return true;
+    }
     if (this.enabled) {
       this.stopMetronome();
+      return true;
     }
     return false;
   },
@@ -184,9 +234,11 @@ export default {
     this.navBlockUntil = Date.now() + 900;
     this.bindKeys();
     if (!this.audioMode) this.initAudio();
+    this.startTimeClock();
   },
   onHide() {
     this.unbindKeys();
+    this.stopTimeClock();
   },
   mounted() {
     this.bindKeys();
@@ -219,9 +271,27 @@ export default {
       // #endif
       this.listenersBound = false;
     },
+    loadAppStartTime() {
+      const stored = uni.getStorageSync('app_start_time');
+      this.appStartTime = stored || Date.now();
+    },
+    startTimeClock() {
+      this.stopTimeClock();
+      this.now = Date.now();
+      this.timeClockTimer = setInterval(() => {
+        this.now = Date.now();
+      }, 1000);
+    },
+    stopTimeClock() {
+      if (this.timeClockTimer) {
+        clearInterval(this.timeClockTimer);
+        this.timeClockTimer = null;
+      }
+    },
     cleanup() {
       this.unbindKeys();
       this.stopMetronome();
+      this.stopTimeClock();
       // #ifdef APP-PLUS
       if (this.nativeSoundPool) {
         try { this.nativeSoundPool.release(); } catch (e) { /* 忽略 */ }
@@ -419,11 +489,26 @@ export default {
       if (!this.totalPages) return;
       this.pageIndex = Math.min(this.totalPages - 1, this.pageIndex + 1);
       this.imageLoadError = false;
+      this.loadCurrentBpm();
     },
     prevPage() {
       if (!this.totalPages) return;
       this.pageIndex = Math.max(0, this.pageIndex - 1);
       this.imageLoadError = false;
+      this.loadCurrentBpm();
+    },
+    loadCurrentBpm() {
+      const item = this.images[this.pageIndex];
+      if (item && typeof item.bpm === 'number' && item.bpm >= 40 && item.bpm <= 240) {
+        const wasRunning = this.enabled;
+        if (wasRunning) this.stopMetronome();
+        this.bpm = item.bpm;
+        if (wasRunning) {
+          this.$nextTick(() => {
+            this.startMetronome();
+          });
+        }
+      }
     },
     onImageLoad() { this.imageLoadError = false; },
     onImageError() { this.imageLoadError = true; },
@@ -582,6 +667,40 @@ export default {
 .img-error text {
   color: #ffc8c8;
   font-size: 9px;
+}
+
+.time-info-block {
+  background: linear-gradient(135deg, rgba(20, 26, 35, 0.9), rgba(20, 26, 35, 0.7));
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid rgba(185, 174, 230, 0.2);
+}
+
+.current-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1c64d;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.current-date-cn {
+  font-size: 11px;
+  color: #b8c6dc;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.elapsed-time {
+  font-size: 10px;
+  color: #97a3b6;
+  text-align: center;
+  margin-top: 4px;
+  font-weight: 500;
 }
 
 .info-block {
