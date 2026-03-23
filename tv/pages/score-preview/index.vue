@@ -16,7 +16,6 @@
       <view class="time-info-block">
         <text class="current-time">{{ currentTimeWithSeconds }}</text>
         <text class="current-date-cn">{{ chineseDateText }}</text>
-        <text class="elapsed-time">用时 {{ elapsedTime }}</text>
       </view>
       
       <view class="info-block">
@@ -40,7 +39,7 @@
         <view class="metro-info">
           <view class="info-row">
             <text class="info-label">BPM</text>
-            <text class="info-value">{{ bpm }}</text>
+            <text class="info-value bpm-value">{{ bpm }}</text>
           </view>
           <view class="info-row">
             <text class="info-label">拍号</text>
@@ -235,10 +234,12 @@ export default {
     this.bindKeys();
     if (!this.audioMode) this.initAudio();
     this.startTimeClock();
+    this.setScreenAlwaysOn();
   },
   onHide() {
     this.unbindKeys();
     this.stopTimeClock();
+    this.releaseScreenAlwaysOn();
   },
   mounted() {
     this.bindKeys();
@@ -250,6 +251,30 @@ export default {
     this.cleanup();
   },
   methods: {
+    setScreenAlwaysOn() {
+      // #ifdef APP-PLUS
+      if (typeof plus !== 'undefined' && plus.device) {
+        try {
+          plus.device.setWakelock(true);
+          console.log('[ScreenAlwaysOn] 已启用屏幕常亮');
+        } catch (e) {
+          console.warn('[ScreenAlwaysOn] 启用失败:', e);
+        }
+      }
+      // #endif
+    },
+    releaseScreenAlwaysOn() {
+      // #ifdef APP-PLUS
+      if (typeof plus !== 'undefined' && plus.device) {
+        try {
+          plus.device.setWakelock(false);
+          console.log('[ScreenAlwaysOn] 已释放屏幕常亮');
+        } catch (e) {
+          console.warn('[ScreenAlwaysOn] 释放失败:', e);
+        }
+      }
+      // #endif
+    },
     bindKeys() {
       this.unbindKeys();
       if (typeof window !== 'undefined') window.addEventListener('keydown', this.onKeyDown);
@@ -622,7 +647,6 @@ export default {
   padding: 14px 14px 14px 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   overflow-y: auto;
 }
 
@@ -673,7 +697,6 @@ export default {
   background: linear-gradient(135deg, rgba(20, 26, 35, 0.9), rgba(20, 26, 35, 0.7));
   border-radius: 10px;
   padding: 10px 12px;
-  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -681,7 +704,7 @@ export default {
 }
 
 .current-time {
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 700;
   color: #f1c64d;
   letter-spacing: 1px;
@@ -689,7 +712,7 @@ export default {
 }
 
 .current-date-cn {
-  font-size: 11px;
+  font-size: 14px;
   color: #b8c6dc;
   text-align: center;
   margin-top: 2px;
@@ -707,6 +730,7 @@ export default {
   background: #141a23;
   border-radius: 10px;
   padding: 12px;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -736,16 +760,16 @@ export default {
   background: #141a23;
   border-radius: 10px;
   padding: 12px;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .metro-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 }
 
 .metro-title {
@@ -767,6 +791,7 @@ export default {
   background: #0f141c;
   border-radius: 8px;
   padding: 10px;
+  margin-bottom: 10px;
 }
 
 .beat-dots {
@@ -794,7 +819,6 @@ export default {
 .metro-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .info-row {
@@ -802,6 +826,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 6px 8px;
+  margin-top: 6px;
   background: rgba(45, 52, 66, 0.3);
   border-radius: 6px;
 }
@@ -815,6 +840,10 @@ export default {
   color: #f5f7fa;
   font-size: 13px;
   font-weight: 700;
+}
+
+.bpm-value {
+  color: #b9aee6;
 }
 
 .open-panel-btn {

@@ -184,9 +184,11 @@ export default {
   onShow() {
     this.initLayout();
     this.bindKeys();
+    this.setScreenAlwaysOn();
   },
   onHide() {
     this.unbindKeys();
+    this.releaseScreenAlwaysOn();
   },
   mounted() {
     this.initLayout();
@@ -218,6 +220,30 @@ export default {
     this.unbindKeys();
   },
   methods: {
+    setScreenAlwaysOn() {
+      // #ifdef APP-PLUS
+      if (typeof plus !== 'undefined' && plus.device) {
+        try {
+          plus.device.setWakelock(true);
+          console.log('[ScreenAlwaysOn] 已启用屏幕常亮');
+        } catch (e) {
+          console.warn('[ScreenAlwaysOn] 启用失败:', e);
+        }
+      }
+      // #endif
+    },
+    releaseScreenAlwaysOn() {
+      // #ifdef APP-PLUS
+      if (typeof plus !== 'undefined' && plus.device) {
+        try {
+          plus.device.setWakelock(false);
+          console.log('[ScreenAlwaysOn] 已释放屏幕常亮');
+        } catch (e) {
+          console.warn('[ScreenAlwaysOn] 释放失败:', e);
+        }
+      }
+      // #endif
+    },
     bindKeys() {
       if (this.listenersBound) return;
       if (typeof window !== 'undefined') {
