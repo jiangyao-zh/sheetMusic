@@ -525,6 +525,8 @@ export default {
     loadCurrentBpm() {
       const item = this.images[this.pageIndex];
       if (item && typeof item.bpm === 'number' && item.bpm >= 40 && item.bpm <= 240) {
+        // BPM 相同时不中断节拍器，保持平滑过渡
+        if (this.bpm === item.bpm) return;
         const wasRunning = this.enabled;
         if (wasRunning) this.stopMetronome();
         this.bpm = item.bpm;
