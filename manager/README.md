@@ -1,29 +1,32 @@
-# 乐谱管理系统 (Sheet Music Manager)
+# 乐谱管理后台 / Sheet Music Manager Backend
 
-本项目提供两类前端使用方式，均共用同一套后端服务与数据库：
-- 后台管理端：`/web/login.html`、`/web/sheets.html`
-- TV 端对接：通过外部接口 `/api/sheets/external` 拉取公开乐谱信息
+[中文](#中文) | [English](#english)
 
-## 环境要求
+## 中文
+
+本目录是后台服务与 Web 管理端。  
+TV 端独立说明已移动到：`../tv/README.md`。
+
+### 环境要求
 - Go >= 1.23
 - MySQL >= 5.7
 - 现代浏览器（Chrome / Edge / Safari）
 
-## 快速启动
-1. 安装依赖
+### 快速启动
+1) 安装依赖
 
 ```bash
 cd manager
 go mod tidy
 ```
 
-2. 初始化数据库
+2) 初始化数据库
 
 ```bash
 mysql -uroot -p < docs/schema.sql
 ```
 
-3. 配置环境变量（推荐使用 `.env`）
+3) 配置环境变量（推荐 `.env`）
 
 ```ini
 APP_NAME=sheet-music-manager
@@ -36,51 +39,31 @@ JWT_SECRET="please-change-this-secret"
 LOG_LEVEL=info
 ```
 
-4. 启动服务
+4) 启动服务
 
 ```bash
 go run main.go
 ```
 
-## 后台端（Web）用法
-- 登录地址：`http://127.0.0.1:8080/web/login.html`
-- 列表地址：`http://127.0.0.1:8080/web/sheets.html`
-- 支持功能：
+### 后台端（Web）用法
+- 登录页：`http://127.0.0.1:8080/web/login.html`
+- 乐谱页：`http://127.0.0.1:8080/web/sheets.html`
+- 主要功能：
   - 单张/批量上传（JPG/PNG，单文件 <= 10MB）
   - 鼠标与手机触摸拖拽排序
   - 重命名（含 BPM 编辑）
   - 删除
   - 查看大图
 
-## TV 端用法
-TV 端建议仅调用公开接口，不走后台登录态。
-
-### TV 拉取接口
-- `GET /api/sheets/external`
-- 返回字段：`id`、`title`、`thumbUrl`、`bpm`、`uploadTime`
-
-### TV 端接入建议
-- 轮询或定时刷新接口数据
-- `thumbUrl` 可直接作为海报/预览图地址
-- 按 `sort_order` 已排序后的顺序展示
-
-### TV 截图预留
-- TV 首页截图（待补充）  
-  `![TV-首页](docs/images/tv-home.png)`
-- TV 列表页截图（待补充）  
-  `![TV-列表](docs/images/tv-list.png)`
-- TV 播放页截图（待补充）  
-  `![TV-播放](docs/images/tv-preview.png)`
-
-## 部署方式
-### 方式一：脚本部署
+### 部署
+- 脚本部署
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-### 方式二：手动部署
+- 手动部署
 
 ```bash
 go build -o app_manager main.go
@@ -88,7 +71,7 @@ mkdir -p public/uploads
 nohup ./app_manager > app.log 2>&1 &
 ```
 
-## API 概览
+### API 概览
 统一返回：`{"code": number, "msg": string, "data": any}`
 
 - `POST /api/auth/login`
@@ -97,28 +80,127 @@ nohup ./app_manager > app.log 2>&1 &
 - `PUT /api/sheets/{id}/sort`
 - `PUT /api/sheets/{id}`（更新标题与 BPM）
 - `DELETE /api/sheets/{id}`
-- `GET /api/sheets/external`
+- `GET /api/sheets/external`（给 TV 用）
 
-## 安全与防泄露检查
-### 1) 不要提交真实密钥
-- 禁止在代码、README、脚本中写入真实数据库密码/Token/JWT 密钥。
-- 统一通过环境变量注入：
-  - `DATABASE_DSN`
-  - `JWT_SECRET`
+### 安全建议
+1) 不要提交真实密钥，统一使用环境变量：
+- `DATABASE_DSN`
+- `JWT_SECRET`
 
-### 2) 提交前扫描
+2) 提交前扫描：
 
 ```bash
 git grep -nE "(password|passwd|secret|token|DATABASE_DSN|AKIA|BEGIN PRIVATE KEY)"
 ```
 
-### 3) 自动忽略
-- 已通过 `.gitignore` 忽略：
-  - `.env` / `.env.*`
-  - 上传文件目录 `public/uploads/*`
-  - 日志文件 `*.log`
+3) 使用 `.gitignore` 忽略：
+- `.env` / `.env.*`
+- `public/uploads/*`
+- `*.log`
 
-## 测试
+### 测试
+
+```bash
+go test ./...
+```
+
+## English
+
+This directory contains the backend service and Web admin UI.  
+TV documentation has been moved to: `../tv/README.md`.
+
+### Requirements
+- Go >= 1.23
+- MySQL >= 5.7
+- Modern browser (Chrome / Edge / Safari)
+
+### Quick Start
+1) Install dependencies
+
+```bash
+cd manager
+go mod tidy
+```
+
+2) Initialize database
+
+```bash
+mysql -uroot -p < docs/schema.sql
+```
+
+3) Configure environment variables (recommended via `.env`)
+
+```ini
+APP_NAME=sheet-music-manager
+APP_ENV=local
+SERVER_PORT=8080
+GIN_MODE=release
+DB_DRIVER=mysql
+DATABASE_DSN="username:password@tcp(host:3306)/music?charset=utf8mb4&parseTime=True&loc=Local"
+JWT_SECRET="please-change-this-secret"
+LOG_LEVEL=info
+```
+
+4) Run service
+
+```bash
+go run main.go
+```
+
+### Web Admin Usage
+- Login: `http://127.0.0.1:8080/web/login.html`
+- Sheets: `http://127.0.0.1:8080/web/sheets.html`
+- Features:
+  - Single/batch upload (JPG/PNG, <=10MB per file)
+  - Mouse & mobile drag sorting
+  - Rename (with BPM edit)
+  - Delete
+  - Full-size preview
+
+### Deployment
+- Script:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+- Manual:
+
+```bash
+go build -o app_manager main.go
+mkdir -p public/uploads
+nohup ./app_manager > app.log 2>&1 &
+```
+
+### API Summary
+Unified response: `{"code": number, "msg": string, "data": any}`
+
+- `POST /api/auth/login`
+- `POST /api/sheets` (`file` for single, `files` for batch)
+- `GET /api/sheets`
+- `PUT /api/sheets/{id}/sort`
+- `PUT /api/sheets/{id}` (update title and BPM)
+- `DELETE /api/sheets/{id}`
+- `GET /api/sheets/external` (for TV client)
+
+### Security
+1) Never commit real secrets. Use environment variables:
+- `DATABASE_DSN`
+- `JWT_SECRET`
+
+2) Pre-commit scan:
+
+```bash
+git grep -nE "(password|passwd|secret|token|DATABASE_DSN|AKIA|BEGIN PRIVATE KEY)"
+```
+
+3) Keep ignored:
+- `.env` / `.env.*`
+- `public/uploads/*`
+- `*.log`
+
+### Tests
 
 ```bash
 go test ./...
