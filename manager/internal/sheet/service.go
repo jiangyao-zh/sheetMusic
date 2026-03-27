@@ -13,7 +13,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("super-secret-key-sheet-music")
+var jwtSecret = []byte(loadJWTSecret())
+
+func loadJWTSecret() string {
+	if v := os.Getenv("JWT_SECRET"); v != "" {
+		return v
+	}
+	return "change-me-in-production"
+}
 
 type Service interface {
 	Login(username, password string) (string, error)
