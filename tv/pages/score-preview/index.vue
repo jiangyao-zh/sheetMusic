@@ -43,7 +43,7 @@
           </view>
           <view class="info-row">
             <text class="info-label">拍号</text>
-            <text class="info-value">{{ beatsPerBar }}/4</text>
+            <text class="info-value">{{ beatsPerBar }}/{{ beatDenominator }}</text>
           </view>
           <view class="info-row">
             <text class="info-label">当前</text>
@@ -62,12 +62,15 @@
       :active-index="panelIndex"
       :bpm="bpm"
       :beats-per-bar="beatsPerBar"
+      :beat-denominator="beatDenominator"
       :enabled="enabled"
       @toggle="toggleMetronome"
       @bpmDown="adjustBpm(-1)"
       @bpmUp="adjustBpm(1)"
       @beatDown="setBeatsPerBar(beatsPerBar - 1)"
       @beatUp="setBeatsPerBar(beatsPerBar + 1)"
+      @beatDenDown="setBeatDenominator(beatDenominator - 1)"
+      @beatDenUp="setBeatDenominator(beatDenominator + 1)"
       @close="panelVisible = false"
     />
 
@@ -122,6 +125,7 @@ export default {
       panelIndex: 0,
       bpm: 80,
       beatsPerBar: 4,
+      beatDenominator: 4,
       enabled: false,
       currentBeat: 0,
       nativeSoundPool: null,
@@ -507,8 +511,12 @@ export default {
       }
     },
     setBeatsPerBar(next) {
-      this.beatsPerBar = Math.max(2, Math.min(8, Number(next) || 4));
+      this.beatsPerBar = Math.max(1, Math.min(16, Number(next) || 4));
       if (this.currentBeat > this.beatsPerBar) this.currentBeat = 1;
+    },
+    setBeatDenominator(next) {
+      const value = Number(next) || 4;
+      this.beatDenominator = Math.max(1, Math.min(16, value));
     },
     nextPage() {
       if (!this.totalPages) return;
@@ -524,17 +532,22 @@ export default {
     },
     loadCurrentBpm() {
       const item = this.images[this.pageIndex];
-      if (item && typeof item.bpm === 'number' && item.bpm >= 40 && item.bpm <= 240) {
-        // BPM 相同时不中断节拍器，保持平滑过渡
-        if (this.bpm === item.bpm) return;
-        const wasRunning = this.enabled;
-        if (wasRunning) this.stopMetronome();
-        this.bpm = item.bpm;
-        if (wasRunning) {
-          this.$nextTick(() => {
-            this.startMetronome();
-          });
-        }
+      if (!item) return;
+      const nextBpm = Number(item.bpm);
+      const hasBpm = Number.isFinite(nextBpm) && nextBpm >= 40 && nextBpm <= 240;
+      const nextBeatNumerator = Number(item.beatsPerBar ?? item.beatNumerator ?? item.beat_numerator);
+      const hasBeatNumerator = Number.isFinite(nextBeatNumerator) && nextBeatNumerator >= 1 && nextBeatNumerator <= 16;
+      const nextBeatDenominator = Number(item.beatDenominator ?? item.beat_denominator);
+      const hasBeatDenominator = Number.isFinite(nextBeatDenominator) && nextBeatDenominator >= 1 && nextBeatDenominator <= 16;
+      const shouldRestart = this.enabled && hasBpm && this.bpm !== nextBpm;
+      if (shouldRestart) this.stopMetronome();
+      if (hasBpm) this.bpm = nextBpm;
+      if (hasBeatNumerator) this.setBeatsPerBar(nextBeatNumerator);
+      if (hasBeatDenominator) this.setBeatDenominator(nextBeatDenominator);
+      if (shouldRestart) {
+        this.$nextTick(() => {
+          this.startMetronome();
+        });
       }
     },
     onImageLoad() { this.imageLoadError = false; },
@@ -559,9 +572,9 @@ export default {
     },
     updatePanelByKey(key) {
       if (key === 'up') { this.panelIndex = Math.max(0, this.panelIndex - 1); return; }
-      if (key === 'down') { this.panelIndex = Math.min(2, this.panelIndex + 1); return; }
+      if (key === 'down') { this.panelIndex = Math.min(3, this.panelIndex + 1); return; }
       if (key === 'enter') {
-        if (this.panelIndex === 2) {
+        if (this.panelIndex === 3) {
           this.toggleMetronome();
           this.closePanelSafely();
         }
@@ -571,6 +584,11 @@ export default {
       if (this.panelIndex === 1) {
         if (key === 'left') this.setBeatsPerBar(this.beatsPerBar - 1);
         if (key === 'right') this.setBeatsPerBar(this.beatsPerBar + 1);
+        return;
+      }
+      if (this.panelIndex === 2) {
+        if (key === 'left') this.setBeatDenominator(this.beatDenominator - 1);
+        if (key === 'right') this.setBeatDenominator(this.beatDenominator + 1);
         return;
       }
     },
