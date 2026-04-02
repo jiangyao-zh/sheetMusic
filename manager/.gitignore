@@ -8,3 +8,4 @@ public/uploads/*
 *.log
 *.pid
 .DS_Store
+app-server
