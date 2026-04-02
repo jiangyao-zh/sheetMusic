@@ -14,7 +14,7 @@ type Repository interface {
 	GetSheets(keyword string) ([]*Sheet, error)
 	GetSheetByID(id int) (*Sheet, error)
 	UpdateSheetSort(id int, sortOrder int) error
-	UpdateSheet(id int, title string, bpm int) error
+	UpdateSheet(id int, title string, bpm int, beatNumerator int, beatDenominator int) error
 	DeleteSheet(id int) error
 	CheckTitleExists(title string) (bool, error)
 }
@@ -74,10 +74,12 @@ func (r *repositoryImpl) UpdateSheetSort(id int, sortOrder int) error {
 	return r.db.Model(&Sheet{}).Where("id = ?", id).Update("sort_order", sortOrder).Error
 }
 
-func (r *repositoryImpl) UpdateSheet(id int, title string, bpm int) error {
+func (r *repositoryImpl) UpdateSheet(id int, title string, bpm int, beatNumerator int, beatDenominator int) error {
 	return r.db.Model(&Sheet{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"title": title,
-		"bpm":   bpm,
+		"title":            title,
+		"bpm":              bpm,
+		"beat_numerator":   beatNumerator,
+		"beat_denominator": beatDenominator,
 	}).Error
 }
 

@@ -741,7 +741,7 @@
             <div class="edit-head">
                 <div class="edit-title-wrap">
                     <span class="edit-title">编辑乐谱信息</span>
-                    <span class="edit-subtitle">可同时修改名称与 BPM</span>
+                    <span class="edit-subtitle">可同时修改名称、BPM 与拍号</span>
                 </div>
                 <button class="preview-close" id="editClose" type="button" aria-label="关闭编辑">×</button>
             </div>
@@ -753,6 +753,14 @@
                 <label class="form-field">
                     <span class="form-label">BPM</span>
                     <input id="editBeatInput" class="form-input" type="number" min="20" max="300" step="1" inputmode="numeric" placeholder="请输入 20-300 之间的数字">
+                </label>
+                <label class="form-field">
+                    <span class="form-label">拍号分子</span>
+                    <input id="editBeatNumeratorInput" class="form-input" type="number" min="1" max="16" step="1" inputmode="numeric" placeholder="请输入 1-16 之间的数字">
+                </label>
+                <label class="form-field">
+                    <span class="form-label">拍号分母</span>
+                    <input id="editBeatDenominatorInput" class="form-input" type="number" min="1" max="16" step="1" inputmode="numeric" placeholder="请输入 1-16 之间的数字">
                 </label>
             </div>
             <div class="edit-actions">
@@ -785,6 +793,8 @@
         const editSave = document.getElementById('editSave');
         const editTitleInput = document.getElementById('editTitleInput');
         const editBeatInput = document.getElementById('editBeatInput');
+        const editBeatNumeratorInput = document.getElementById('editBeatNumeratorInput');
+        const editBeatDenominatorInput = document.getElementById('editBeatDenominatorInput');
 
         const apiFetch = async (url, options = {}) => {
             options.headers = {
@@ -832,9 +842,25 @@
             return Number.isFinite(value) && value >= 20 ? value : 80;
         }
 
+        function getBeatNumerator(sheet) {
+            const raw = sheet && (sheet.beat_numerator ?? sheet.beatNumerator);
+            const value = Number(raw);
+            return Number.isFinite(value) && value >= 1 && value <= 16 ? Math.round(value) : 4;
+        }
+
+        function getBeatDenominator(sheet) {
+            const raw = sheet && (sheet.beat_denominator ?? sheet.beatDenominator);
+            const value = Number(raw);
+            return Number.isFinite(value) && value >= 1 && value <= 16 ? Math.round(value) : 4;
+        }
+
+        function formatTimeSignature(sheet) {
+            return `${getBeatNumerator(sheet)}/${getBeatDenominator(sheet)}`;
+        }
+
         function formatDisplayTitle(sheet) {
             const title = sheet.title || '未命名乐谱';
-            return `${title}（${getBpm(sheet)} BPM）`;
+            return `${title}（${getBpm(sheet)} BPM · ${formatTimeSignature(sheet)}）`;
         }
 
         function showToast(message, type = 'info') {
@@ -949,7 +975,7 @@
                 title.className = 'card-title';
                 title.innerHTML = `<span class="title-main"></span><span class="title-bpm"></span>`;
                 title.querySelector('.title-main').textContent = sheet.title;
-                title.querySelector('.title-bpm').textContent = `${getBpm(sheet)} BPM`;
+                title.querySelector('.title-bpm').textContent = `${getBpm(sheet)} BPM · ${formatTimeSignature(sheet)}`;
                 title.title = formatDisplayTitle(sheet);
 
                 const renameBtn = document.createElement('button');
@@ -1101,6 +1127,8 @@
             editingSheetId = id;
             editTitleInput.value = current.title || '';
             editBeatInput.value = getBpm(current);
+            editBeatNumeratorInput.value = getBeatNumerator(current);
+            editBeatDenominatorInput.value = getBeatDenominator(current);
             editModal.classList.add('open');
             document.body.style.overflow = 'hidden';
             window.setTimeout(() => editTitleInput.focus(), 0);
@@ -1113,7 +1141,7 @@
                 return;
             }
             previewTitle.textContent = formatDisplayTitle(sheet);
-            previewSubtitle.textContent = `原图预览 · BPM ${getBpm(sheet)}`;
+            previewSubtitle.textContent = `原图预览 · BPM ${getBpm(sheet)} · 拍号 ${formatTimeSignature(sheet)}`;
             previewImage.src = imageUrl;
             previewImage.onerror = () => {
                 previewImage.src = createFallbackSvg();
@@ -1134,11 +1162,16 @@
             document.body.style.overflow = '';
         }
 
-        async function saveTitle(id, oldTitle, newTitle, oldBpm, newBpm) {
+        async function saveTitle(id, oldTitle, newTitle, oldBpm, newBpm, oldBeatNumerator, newBeatNumerator, oldBeatDenominator, newBeatDenominator) {
             const data = await apiFetch(`/api/sheets/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: newTitle, bpm: newBpm })
+                body: JSON.stringify({
+                    title: newTitle,
+                    bpm: newBpm,
+                    beat_numerator: newBeatNumerator,
+                    beat_denominator: newBeatDenominator
+                })
             });
 
             if (!data) return;
@@ -1149,6 +1182,8 @@
                 if (current) {
                     current.title = newTitle;
                     current.bpm = newBpm;
+                    current.beat_numerator = newBeatNumerator;
+                    current.beat_denominator = newBeatDenominator;
                 }
                 showToast('已更新乐谱信息', 'success');
                 closeEditModal();
@@ -1157,6 +1192,8 @@
                 if (current) {
                     current.title = oldTitle;
                     current.bpm = oldBpm;
+                    current.beat_numerator = oldBeatNumerator;
+                    current.beat_denominator = oldBeatDenominator;
                 }
                 showToast(data.msg || '保存失败', 'error');
                 renderGrid();
@@ -1169,6 +1206,8 @@
             if (!current) return;
             const nextTitle = editTitleInput.value.trim();
             const nextBpm = Number(editBeatInput.value);
+            const nextBeatNumerator = Number(editBeatNumeratorInput.value);
+            const nextBeatDenominator = Number(editBeatDenominatorInput.value);
             if (!nextTitle) {
                 showToast('请输入乐谱名称', 'error');
                 editTitleInput.focus();
@@ -1179,12 +1218,32 @@
                 editBeatInput.focus();
                 return;
             }
+            if (!Number.isInteger(nextBeatNumerator) || nextBeatNumerator < 1 || nextBeatNumerator > 16) {
+                showToast('拍号分子请输入 1-16 的整数', 'error');
+                editBeatNumeratorInput.focus();
+                return;
+            }
+            if (!Number.isInteger(nextBeatDenominator) || nextBeatDenominator < 1 || nextBeatDenominator > 16) {
+                showToast('拍号分母请输入 1-16 的整数', 'error');
+                editBeatDenominatorInput.focus();
+                return;
+            }
             if (sheets.some((item) => item.id !== id && item.title === nextTitle)) {
                 showToast('名称已存在，请更换', 'error');
                 editTitleInput.focus();
                 return;
             }
-            await saveTitle(id, current.title, nextTitle, getBpm(current), nextBpm);
+            await saveTitle(
+                id,
+                current.title,
+                nextTitle,
+                getBpm(current),
+                nextBpm,
+                getBeatNumerator(current),
+                nextBeatNumerator,
+                getBeatDenominator(current),
+                nextBeatDenominator
+            );
         }
 
         function handleDragStart(e) {
