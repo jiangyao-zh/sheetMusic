@@ -41,8 +41,8 @@ export async function fetchSheetList() {
         // 后端已不压缩图片，thumbUrl 即为原图，直接使用
         src: `${baseUrl}${item.thumbUrl}`,
         bpm: Number(item.bpm) || 80,
-        beatsPerBar: Number(item.beatNumerator) || 4,
-        beatDenominator: Number(item.beatDenominator) || 4,
+        beatsPerBar: Number(item.beat_numerator ?? item.beatNumerator) || 4,
+        beatDenominator: Number(item.beat_denominator ?? item.beatDenominator) || 4,
         uploadTime: item.uploadTime,
         type: 'remote'
       }));
