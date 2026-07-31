@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- appid 需与前端 manifest.json 及 assets/apps 目录名一致 -->
+<hbuilder>
+    <apps>
+        <app appid="__UNI__PITCH01" appver="1.0.0" />
+    </apps>
+</hbuilder>

@@ -1,0 +1,19 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "小提琴音准检测",
+        "navigationBarBackgroundColor": "#0f1115",
+        "navigationBarTextStyle": "white",
+        "backgroundColor": "#0f1115"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "小提琴音准检测",
+    "navigationBarBackgroundColor": "#0f1115",
+    "backgroundColor": "#0f1115"
+  }
+}

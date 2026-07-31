@@ -1,0 +1,2458 @@
+{
+  "source": "music_1_omr.mxl",
+  "metadata": {
+    "title": null,
+    "composer": null,
+    "movement_name": "music_1_omr.mxl"
+  },
+  "score": {
+    "part_count": 1,
+    "measure_count": 46,
+    "duration_quarters": 92.625
+  },
+  "parts": [
+    {
+      "index": 0,
+      "id": "Voice",
+      "name": "Voice",
+      "measure_count": 46,
+      "signatures": {
+        "time_signatures": [
+          "2/4"
+        ],
+        "key_signatures": [],
+        "tempos": [],
+        "clefs": [
+          "G"
+        ]
+      },
+      "measures": [
+        {
+          "number": 0,
+          "offset_quarters": 0.0,
+          "duration_quarters": 0.5,
+          "events": [
+            {
+              "offset": 0.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 1,
+          "offset_quarters": 0.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 0.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 1.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "rest",
+              "pitch": null
+            },
+            {
+              "offset": 2.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 2,
+          "offset_quarters": 2.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 2.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 3.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "rest",
+              "pitch": null
+            },
+            {
+              "offset": 4.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            }
+          ]
+        },
+        {
+          "number": 3,
+          "offset_quarters": 4.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 4.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 4.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 5.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 5.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 5.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 5.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 6.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 6.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            }
+          ]
+        },
+        {
+          "number": 4,
+          "offset_quarters": 6.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 6.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 7.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 7.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "rest",
+              "pitch": null
+            },
+            {
+              "offset": 7.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 8.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#4",
+              "midi": 68
+            },
+            {
+              "offset": 8.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 5,
+          "offset_quarters": 8.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 8.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 8.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 9.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 9.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 9.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 9.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 10.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 10.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 6,
+          "offset_quarters": 10.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 10.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 10.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 11.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#4",
+              "midi": 68
+            },
+            {
+              "offset": 11.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 11.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 11.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 12.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#4",
+              "midi": 68
+            },
+            {
+              "offset": 12.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 7,
+          "offset_quarters": 12.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 12.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 12.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 13.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 13.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 13.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 13.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 14.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 14.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 8,
+          "offset_quarters": 14.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 14.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "G#4",
+              "midi": 68
+            },
+            {
+              "offset": 15.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E4",
+              "midi": 64
+            },
+            {
+              "offset": 15.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            }
+          ]
+        },
+        {
+          "number": 9,
+          "offset_quarters": 16.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 16.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 17.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "chord",
+              "pitches": [
+                "B4",
+                "A5"
+              ],
+              "midi": [
+                71,
+                81
+              ]
+            }
+          ]
+        },
+        {
+          "number": 10,
+          "offset_quarters": 18.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 18.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 19.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 19.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 19.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 20.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            }
+          ]
+        },
+        {
+          "number": 11,
+          "offset_quarters": 20.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 20.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 20.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 21.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 21.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 21.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 12,
+          "offset_quarters": 22.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 22.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 23.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 23.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 23.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 24.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            }
+          ]
+        },
+        {
+          "number": 13,
+          "offset_quarters": 24.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 24.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 25.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 25.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 26.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            }
+          ]
+        },
+        {
+          "number": 14,
+          "offset_quarters": 26.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 26.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 26.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 27.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 27.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 27.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 27.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 28.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#4",
+              "midi": 66
+            },
+            {
+              "offset": 28.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E4",
+              "midi": 64
+            }
+          ]
+        },
+        {
+          "number": 15,
+          "offset_quarters": 28.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 28.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D#4",
+              "midi": 63
+            },
+            {
+              "offset": 29.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 29.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 30.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 16,
+          "offset_quarters": 30.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 30.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 31.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            }
+          ]
+        },
+        {
+          "number": 17,
+          "offset_quarters": 32.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 32.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 32.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 33.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 33.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 33.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D#5",
+              "midi": 75
+            },
+            {
+              "offset": 33.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 34.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 34.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D#5",
+              "midi": 75
+            }
+          ]
+        },
+        {
+          "number": 18,
+          "offset_quarters": 34.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 34.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 35.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 35.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 36.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D#5",
+              "midi": 75
+            }
+          ]
+        },
+        {
+          "number": 19,
+          "offset_quarters": 36.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 36.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 36.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 37.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 37.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 37.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 38.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 20,
+          "offset_quarters": 38.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 38.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#4",
+              "midi": 66
+            },
+            {
+              "offset": 38.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 39.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 39.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 39.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 40.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#4",
+              "midi": 66
+            },
+            {
+              "offset": 40.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E4",
+              "midi": 64
+            }
+          ]
+        },
+        {
+          "number": 21,
+          "offset_quarters": 40.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 40.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D#4",
+              "midi": 63
+            },
+            {
+              "offset": 41.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 41.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 42.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#4",
+              "midi": 66
+            },
+            {
+              "offset": 42.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E4",
+              "midi": 64
+            }
+          ]
+        },
+        {
+          "number": 22,
+          "offset_quarters": 42.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 42.5,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "E4",
+              "midi": 64
+            },
+            {
+              "offset": 43.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "rest",
+              "pitch": null
+            },
+            {
+              "offset": 43.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 44.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 44.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 23,
+          "offset_quarters": 44.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 44.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 44.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#5",
+              "midi": 80
+            },
+            {
+              "offset": 45.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 45.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 45.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 46.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 46.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 24,
+          "offset_quarters": 46.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 46.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "C6",
+              "midi": 84
+            },
+            {
+              "offset": 47.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 47.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 47.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 48.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 48.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 25,
+          "offset_quarters": 48.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 48.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 48.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 49.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 49.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 49.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 50.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 50.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 26,
+          "offset_quarters": 50.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 50.5,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D6",
+              "midi": 86
+            },
+            {
+              "offset": 51.0,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "C6",
+              "midi": 84
+            },
+            {
+              "offset": 51.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C6",
+              "midi": 84
+            },
+            {
+              "offset": 51.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 52.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 52.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 27,
+          "offset_quarters": 52.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 52.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C6",
+              "midi": 84
+            },
+            {
+              "offset": 52.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 53.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 53.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 53.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 53.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 54.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 54.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            }
+          ]
+        },
+        {
+          "number": 28,
+          "offset_quarters": 54.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 54.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B5",
+              "midi": 83
+            },
+            {
+              "offset": 54.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 55.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 55.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 55.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 55.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 56.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 56.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            }
+          ]
+        },
+        {
+          "number": 29,
+          "offset_quarters": 56.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 56.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 56.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 57.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 57.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 57.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 57.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 58.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 58.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            }
+          ]
+        },
+        {
+          "number": 30,
+          "offset_quarters": 58.5,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 58.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#5",
+              "midi": 80
+            },
+            {
+              "offset": 58.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 59.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G#5",
+              "midi": 80
+            },
+            {
+              "offset": 59.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 59.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 59.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 60.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 60.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            }
+          ]
+        },
+        {
+          "number": 31,
+          "offset_quarters": 60.5,
+          "duration_quarters": 2.5,
+          "events": []
+        },
+        {
+          "number": 32,
+          "offset_quarters": 63.0,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 63.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 63.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 63.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 63.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 64.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 64.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 64.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 64.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            }
+          ]
+        },
+        {
+          "number": 33,
+          "offset_quarters": 65.0,
+          "duration_quarters": 1.75,
+          "events": [
+            {
+              "offset": 65.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 65.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 65.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 65.75,
+              "duration_quarters": 0.16666666666666666,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 65.9167,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 66.1667,
+              "duration_quarters": 0.16666666666666666,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 66.3333,
+              "duration_quarters": 0.16666666666666666,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 66.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            }
+          ]
+        },
+        {
+          "number": 34,
+          "offset_quarters": 66.75,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 66.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 67.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 67.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 67.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 67.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 68.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 68.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 68.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            }
+          ]
+        },
+        {
+          "number": 35,
+          "offset_quarters": 68.75,
+          "duration_quarters": 2.125,
+          "events": [
+            {
+              "offset": 68.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 69.0,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B-4",
+              "midi": 70
+            },
+            {
+              "offset": 69.25,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 69.5,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 69.75,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F4",
+              "midi": 65
+            },
+            {
+              "offset": 70.0,
+              "duration_quarters": 0.375,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 70.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 70.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            }
+          ]
+        },
+        {
+          "number": 37,
+          "offset_quarters": 70.875,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 70.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 71.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 71.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 71.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 71.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 72.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A5",
+              "midi": 81
+            },
+            {
+              "offset": 72.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 72.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            }
+          ]
+        },
+        {
+          "number": 38,
+          "offset_quarters": 72.875,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 72.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 73.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 73.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 73.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 73.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 74.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 74.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 74.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            }
+          ]
+        },
+        {
+          "number": 39,
+          "offset_quarters": 74.875,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 74.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 75.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 75.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 75.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 75.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 76.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 76.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 76.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            }
+          ]
+        },
+        {
+          "number": 40,
+          "offset_quarters": 76.875,
+          "duration_quarters": 2.0,
+          "events": []
+        },
+        {
+          "number": 42,
+          "offset_quarters": 78.875,
+          "duration_quarters": 3.75,
+          "events": []
+        },
+        {
+          "number": 43,
+          "offset_quarters": 82.625,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 82.625,
+              "duration_quarters": 0.125,
+              "duration_type": "32nd",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 82.75,
+              "duration_quarters": 0.125,
+              "duration_type": "32nd",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 82.875,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "F5",
+              "midi": 77
+            },
+            {
+              "offset": 83.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 83.625,
+              "duration_quarters": 0.125,
+              "duration_type": "32nd",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 83.75,
+              "duration_quarters": 0.125,
+              "duration_type": "32nd",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 83.875,
+              "duration_quarters": 0.5,
+              "duration_type": "eighth",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 84.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            }
+          ]
+        },
+        {
+          "number": 44,
+          "offset_quarters": 84.625,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 84.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 84.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 85.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "A4",
+              "midi": 69
+            },
+            {
+              "offset": 85.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 85.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 85.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 86.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 86.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            }
+          ]
+        },
+        {
+          "number": 45,
+          "offset_quarters": 86.625,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 86.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 86.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 87.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 87.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 87.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "E5",
+              "midi": 76
+            },
+            {
+              "offset": 87.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            },
+            {
+              "offset": 88.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "F#5",
+              "midi": 78
+            },
+            {
+              "offset": 88.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            }
+          ]
+        },
+        {
+          "number": 46,
+          "offset_quarters": 88.625,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 88.625,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 88.875,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "G4",
+              "midi": 67
+            },
+            {
+              "offset": 89.125,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "B4",
+              "midi": 71
+            },
+            {
+              "offset": 89.375,
+              "duration_quarters": 0.25,
+              "duration_type": "16th",
+              "kind": "note",
+              "pitch": "D5",
+              "midi": 74
+            },
+            {
+              "offset": 89.625,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            }
+          ]
+        },
+        {
+          "number": 47,
+          "offset_quarters": 90.625,
+          "duration_quarters": 2.0,
+          "events": [
+            {
+              "offset": 90.625,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "G5",
+              "midi": 79
+            },
+            {
+              "offset": 91.625,
+              "duration_quarters": 1.0,
+              "duration_type": "quarter",
+              "kind": "note",
+              "pitch": "C5",
+              "midi": 72
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+-keep class com.sheetmusic.pitch.plugin.** { *; }
+-keep class io.dcloud.** { *; }

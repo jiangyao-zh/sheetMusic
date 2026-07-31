@@ -1,0 +1,58 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.sheetmusic.pitch'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 26
+        targetSdk 33
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    testOptions {
+        unitTests.includeAndroidResources = false
+    }
+
+    // 未放入 DCloud SDK 时使用本地 stubs；已放入则走真实 compileOnly aar/jar
+    sourceSets {
+        main {
+            def libsDir = file('../app/libs')
+            def hasUniSdk = libsDir.exists() && libsDir.listFiles()?.any {
+                def n = it.name.toLowerCase()
+                n.endsWith('.jar') || n.endsWith('.aar')
+            }
+            if (!hasUniSdk) {
+                java.srcDirs += 'src/stubs/java'
+            }
+        }
+    }
+}
+
+dependencies {
+    // 离线 SDK 的 uni.jar / uniapp-v8-release.aar 放到 ../app/libs 后可 compileOnly 引用
+    compileOnly fileTree(dir: '../app/libs', include: ['*.jar', '*.aar'])
+
+    implementation 'androidx.core:core-ktx:1.12.0'
+    testImplementation 'junit:junit:4.13.2'
+}

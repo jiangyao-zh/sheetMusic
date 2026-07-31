@@ -10,8 +10,10 @@
 ### 项目结构
 - 后台服务与管理端：`manager`
 - TV 端应用：`tv`
+- 小提琴音准检测 App：`tuner`
 - 后台文档：`manager/README.md`
 - TV 文档：`tv/README.md`
+- 音准检测文档：`tuner/README.md`
 
 ### 快速启动（后台）
 ```bash
@@ -35,8 +37,10 @@ You can upload sheet images, reorder them, set BPM, and sync data to TV.
 ### Project Structure
 - Backend & Web manager: `manager`
 - TV client app: `tv`
+- Violin pitch tuner app: `tuner`
 - Backend docs: `manager/README.md`
 - TV docs: `tv/README.md`
+- Tuner docs: `tuner/README.md`
 
 ### Quick Start (Backend)
 ```bash

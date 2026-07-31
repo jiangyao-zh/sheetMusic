@@ -1,0 +1,12 @@
+{
+  "name": "tuner-workspace",
+  "private": true,
+  "scripts": {
+    "dev:h5": "npm --prefix app run dev:h5",
+    "build:h5": "npm --prefix app run build:h5",
+    "build:app": "npm --prefix app run build:app",
+    "sync:www": "bash scripts/sync-www.sh",
+    "verify:yin": "node scripts/verify-yin.mjs",
+    "package:apk": "bash scripts/package-apk.sh"
+  }
+}

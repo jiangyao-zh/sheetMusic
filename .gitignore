@@ -23,6 +23,26 @@ manager/app-server
 manager/*.log
 manager/nohup.out
 
+# Tuner 目录相关
+tuner/app/node_modules/
+tuner/app/dist/
+tuner/app/unpackage/
+tuner/dist/
+tuner/android/.gradle/
+tuner/android/build/
+tuner/android/app/build/
+tuner/android/uniplugin_pitch/build/
+tuner/android/local.properties
+tuner/android/*.iml
+tuner/android/.idea/
+tuner/android/SDK/
+tuner/android/app/libs/*.aar
+tuner/android/app/libs/*.jar
+tuner/android/**/*.keystore
+tuner/android/**/*.jks
+*.apk
+*.aab
+
 # 系统文件
 .DS_Store
 Thumbs.db

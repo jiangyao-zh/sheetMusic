@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Tuner"
+        android:usesCleartextTraffic="true">
+
+        <!-- 替换为 DCloud 开发者中心申请的离线打包 AppKey -->
+        <meta-data
+            android:name="dcloud_appkey"
+            android:value="REPLACE_WITH_DCLOUD_OFFLINE_APPKEY" />
+
+        <!--
+          集成离线 SDK 后，请将启动 Activity 替换为 SDK 提供的入口
+         （通常为 io.dcloud.PandoraEntry），并删除本 DebugActivity。
+          当前 DebugActivity 用于在无 SDK 时验证插件 module 可编译/安装。
+        -->
+        <activity
+            android:name=".DebugActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

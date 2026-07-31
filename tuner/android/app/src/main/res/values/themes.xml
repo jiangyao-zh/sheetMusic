@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Tuner" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#0f1115</item>
+        <item name="android:navigationBarColor">#0f1115</item>
+        <item name="android:windowBackground">#0f1115</item>
+        <item name="colorPrimary">#3d8bfd</item>
+    </style>
+</resources>

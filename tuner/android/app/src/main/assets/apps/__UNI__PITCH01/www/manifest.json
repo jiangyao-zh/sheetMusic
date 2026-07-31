@@ -1,0 +1,105 @@
+{
+  "@platforms": [
+    "android",
+    "iPhone",
+    "iPad"
+  ],
+  "id": "__UNI__PITCH01",
+  "name": "小提琴音准检测",
+  "version": {
+    "name": "1.0.0",
+    "code": "100"
+  },
+  "description": "Violin pitch detection MVP",
+  "developer": {
+    "name": "",
+    "email": "",
+    "url": ""
+  },
+  "permissions": {
+    "UniNView": {
+      "description": "UniNView原生渲染"
+    }
+  },
+  "plus": {
+    "useragent": {
+      "value": "uni-app",
+      "concatenate": true
+    },
+    "splashscreen": {
+      "target": "id:1",
+      "autoclose": true,
+      "waiting": true,
+      "delay": 0
+    },
+    "popGesture": "close",
+    "launchwebview": {
+      "render": "always",
+      "id": "1",
+      "kernel": "WKWebview"
+    },
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "distribute": {
+      "google": {
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
+          "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>",
+          "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>"
+        ],
+        "minSdkVersion": 26,
+        "targetSdkVersion": 33,
+        "abiFilters": [
+          "armeabi-v7a",
+          "arm64-v8a"
+        ]
+      },
+      "apple": {},
+      "plugins": {
+        "audio": {
+          "mp3": {
+            "description": "Android平台录音支持MP3格式文件"
+          }
+        }
+      }
+    },
+    "nativePlugins": {
+      "PitchDetector": {
+        "__plugin_info__": {
+          "name": "PitchDetector",
+          "description": "Violin pitch detection via AudioRecord + YIN",
+          "platforms": "Android",
+          "url": "",
+          "android_package_name": "",
+          "ios_bundle_id": "",
+          "isCloud": false,
+          "bought": -1,
+          "pid": "",
+          "parameters": {}
+        }
+      }
+    },
+    "statusbar": {
+      "immersed": "supportedDevice",
+      "style": "light",
+      "background": "#0f1115"
+    },
+    "allowsInlineMediaPlayback": true,
+    "uni-app": {
+      "control": "uni-v3",
+      "vueVersion": "3",
+      "compilerVersion": "4.15",
+      "nvueCompiler": "uni-app",
+      "renderer": "auto",
+      "nvue": {
+        "flex-direction": "column"
+      },
+      "nvueLaunchMode": "normal",
+      "webView": {
+        "minUserAgentVersion": "49.0"
+      }
+    }
+  },
+  "launch_path": "__uniappview.html"
+}
