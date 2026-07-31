@@ -1,3 +1,13 @@
+<!--
+ * @Author: jiangyao
+ * @Date: 2026-03-14 10:07:23
+ * @LastEditors: jiangyao
+ * @LastEditTime: 2026-04-02 22:06:04
+ * @FilePath: /sheetMusic/tv/components/MetronomePanel.vue
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by JY, All Rights Reserved. 
+-->
 <template>
   <view v-if="visible" class="panel">
     <text class="panel-title">节拍器设置</text>
@@ -10,6 +20,10 @@
       <text class="value">{{ beatsPerBar }}</text>
     </view>
     <view class="row" :class="{ active: activeIndex === 2 }">
+      <text class="label">拍号分母</text>
+      <text class="value">{{ beatDenominator }}</text>
+    </view>
+    <view class="row" :class="{ active: activeIndex === 3 }">
       <text class="label">节拍器</text>
       <text class="value">{{ enabled ? "停止" : "启动" }}</text>
     </view>
@@ -18,12 +32,13 @@
 
 <script>
 export default {
-  emits: ["toggle", "bpmDown", "bpmUp", "beatDown", "beatUp", "close"],
+  emits: ["toggle", "bpmDown", "bpmUp", "beatDown", "beatUp", "beatDenDown", "beatDenUp", "close"],
   props: {
     visible: { type: Boolean, default: false },
     activeIndex: { type: Number, default: 0 },
     bpm: { type: Number, default: 80 },
     beatsPerBar: { type: Number, default: 4 },
+    beatDenominator: { type: Number, default: 4 },
     enabled: { type: Boolean, default: false }
   }
 };

@@ -75,11 +75,13 @@ func (m *MockRepository) UpdateSheetSort(id int, sortOrder int) error {
 	return errors.New("not found")
 }
 
-func (m *MockRepository) UpdateSheet(id int, title string, bpm int) error {
+func (m *MockRepository) UpdateSheet(id int, title string, bpm int, beatNumerator int, beatDenominator int) error {
 	if s, ok := m.Sheets[id]; ok {
 		delete(m.SheetTitle, s.Title)
 		s.Title = title
 		s.BPM = bpm
+		s.BeatNumerator = beatNumerator
+		s.BeatDenominator = beatDenominator
 		m.SheetTitle[title] = true
 		return nil
 	}

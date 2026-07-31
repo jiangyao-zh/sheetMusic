@@ -27,7 +27,7 @@ type Service interface {
 	UploadSheet(file *multipart.FileHeader, userID int) (*Sheet, error)
 	ListSheets(keyword string) ([]*Sheet, error)
 	UpdateSortOrder(id int, order int) error
-	UpdateSheet(id int, title string, bpm int) error
+	UpdateSheet(id int, title string, bpm int, beatNumerator int, beatDenominator int) error
 	DeleteSheet(id int) error
 	ListExternal() ([]SheetExternal, error)
 }
@@ -132,11 +132,13 @@ func (s *serviceImpl) UploadSheet(file *multipart.FileHeader, userID int) (*Shee
 	thumbPath = filePath
 
 	sheet := &Sheet{
-		Title:        title,
-		FilePath:     "/" + filePath,
-		ThumbPath:    "/" + thumbPath,
-		BPM:          80,
-		UploadUserID: userID,
+		Title:           title,
+		FilePath:        "/" + filePath,
+		ThumbPath:       "/" + thumbPath,
+		BPM:             80,
+		BeatNumerator:   4,
+		BeatDenominator: 4,
+		UploadUserID:    userID,
 	}
 	if err := s.repo.CreateSheet(sheet); err != nil {
 		os.Remove(filePath)
@@ -155,7 +157,7 @@ func (s *serviceImpl) UpdateSortOrder(id int, order int) error {
 	return s.repo.UpdateSheetSort(id, order)
 }
 
-func (s *serviceImpl) UpdateSheet(id int, title string, bpm int) error {
+func (s *serviceImpl) UpdateSheet(id int, title string, bpm int, beatNumerator int, beatDenominator int) error {
 	current, err := s.repo.GetSheetByID(id)
 	if err != nil {
 		return err
@@ -172,7 +174,7 @@ func (s *serviceImpl) UpdateSheet(id int, title string, bpm int) error {
 			return errors.New("title already exists")
 		}
 	}
-	return s.repo.UpdateSheet(id, title, bpm)
+	return s.repo.UpdateSheet(id, title, bpm, beatNumerator, beatDenominator)
 }
 
 func (s *serviceImpl) DeleteSheet(id int) error {
@@ -204,11 +206,13 @@ func (s *serviceImpl) ListExternal() ([]SheetExternal, error) {
 	var res []SheetExternal
 	for _, sheet := range sheets {
 		res = append(res, SheetExternal{
-			ID:         sheet.ID,
-			Title:      sheet.Title,
-			ThumbUrl:   sheet.FilePath,
-			BPM:        sheet.BPM,
-			UploadTime: sheet.CreatedAt,
+			ID:              sheet.ID,
+			Title:           sheet.Title,
+			ThumbUrl:        sheet.FilePath,
+			BPM:             sheet.BPM,
+			BeatNumerator:   sheet.BeatNumerator,
+			BeatDenominator: sheet.BeatDenominator,
+			UploadTime:      sheet.CreatedAt,
 		})
 	}
 	return res, nil

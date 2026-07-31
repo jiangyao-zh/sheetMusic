@@ -42,7 +42,9 @@ function fetchSheetListFromApi() {
             title: item.title || `乐谱 ${item.id}`,
             remoteUrl: removeThumbPrefix(`${baseUrl}${item.thumbUrl}`),
             uploadTime: item.uploadTime,
-            bpm: item.bpm || 80
+            bpm: Number(item.bpm) || 80,
+            beatsPerBar: Number(item.beat_numerator ?? item.beatNumerator) || 4,
+            beatDenominator: Number(item.beat_denominator ?? item.beatDenominator) || 4
           }));
           resolve(items);
         } else {
@@ -173,6 +175,10 @@ export async function syncAllImages(onProgress) {
         src: localSrc,
         uploadTime: item.uploadTime,
         bpm: item.bpm,
+        beatsPerBar: item.beatsPerBar,
+        beat_numerator: item.beatsPerBar,
+        beatDenominator: item.beatDenominator,
+        beat_denominator: item.beatDenominator,
         type: 'local'
       });
       console.log(`[Sync] (${i + 1}/${items.length}) ${item.title} ✓`);
@@ -185,6 +191,10 @@ export async function syncAllImages(onProgress) {
         src: item.remoteUrl,
         uploadTime: item.uploadTime,
         bpm: item.bpm,
+        beatsPerBar: item.beatsPerBar,
+        beat_numerator: item.beatsPerBar,
+        beatDenominator: item.beatDenominator,
+        beat_denominator: item.beatDenominator,
         type: 'remote'
       });
     }

@@ -135,12 +135,12 @@ func (h *Handler) RenameSheet(c *gin.Context) {
 		return
 	}
 
-	if req.BPM == nil {
+	if req.BPM == nil || req.BeatNumerator == nil || req.BeatDenominator == nil {
 		c.JSON(http.StatusBadRequest, Response{Code: 400, Msg: "invalid parameters"})
 		return
 	}
 
-	if err := h.svc.UpdateSheet(id, req.Title, *req.BPM); err != nil {
+	if err := h.svc.UpdateSheet(id, req.Title, *req.BPM, *req.BeatNumerator, *req.BeatDenominator); err != nil {
 		c.JSON(http.StatusInternalServerError, Response{Code: 500, Msg: err.Error()})
 		return
 	}
