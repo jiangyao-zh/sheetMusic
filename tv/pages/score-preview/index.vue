@@ -55,6 +55,19 @@
           {{ panelVisible ? '关闭设置' : '打开设置' }}
         </button>
       </view>
+
+      <PitchDisplay
+        :result="pitchResult"
+        :socket-status="pitchSocketStatus"
+        :last-msg-at="pitchLastMsgAt"
+        :now="now"
+      />
+
+      <view class="pitch-session">
+        <text class="session-label">音准会话</text>
+        <text class="session-value">{{ pitchSession }}</text>
+        <text class="session-host">{{ pitchHost }}:{{ pitchPort }}</text>
+      </view>
     </view>
 
     <MetronomePanel
@@ -81,7 +94,9 @@
 import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getLocalSyncedImages } from '@/src/utils/syncImages';
+import { pitchSocket } from '@/src/services/pitchSocket';
 import MetronomePanel from '@/components/MetronomePanel.vue';
+import PitchDisplay from '@/components/PitchDisplay.vue';
 
 const KEY_MAP = {
   4: 'back', 13: 'enter', 19: 'up', 20: 'down', 21: 'left', 22: 'right',
@@ -116,7 +131,7 @@ function resolveKey(evt) {
 }
 
 export default {
-  components: { MetronomePanel },
+  components: { MetronomePanel, PitchDisplay },
   data() {
     return {
       images: [],
@@ -146,7 +161,14 @@ export default {
       navBlockUntil: 0,
       now: Date.now(),
       appStartTime: 0,
-      timeClockTimer: null
+      timeClockTimer: null,
+      pitchResult: null,
+      pitchSocketStatus: 'idle',
+      pitchLastMsgAt: 0,
+      pitchSession: '',
+      pitchHost: '',
+      pitchPort: 9091,
+      pitchUnsub: null
     };
   },
   computed: {
@@ -239,14 +261,17 @@ export default {
     if (!this.audioMode) this.initAudio();
     this.startTimeClock();
     this.setScreenAlwaysOn();
+    this.connectPitchSocket();
   },
   onHide() {
     this.unbindKeys();
     this.stopTimeClock();
     this.releaseScreenAlwaysOn();
+    this.disconnectPitchSocket();
   },
   mounted() {
     this.bindKeys();
+    this.connectPitchSocket();
   },
   onUnload() {
     this.cleanup();
@@ -255,6 +280,27 @@ export default {
     this.cleanup();
   },
   methods: {
+    connectPitchSocket() {
+      if (this.pitchUnsub) return;
+      const session = uni.getStorageSync('tv_session_id') || '';
+      pitchSocket.configure({ session: session || undefined });
+      this.pitchUnsub = pitchSocket.onUpdate((snap) => {
+        this.pitchSocketStatus = snap.status;
+        this.pitchResult = snap.latest;
+        this.pitchLastMsgAt = snap.lastMsgAt || 0;
+        this.pitchSession = snap.session || '';
+        this.pitchHost = snap.host || '';
+        this.pitchPort = snap.port || 9091;
+      });
+      pitchSocket.connect();
+    },
+    disconnectPitchSocket() {
+      if (this.pitchUnsub) {
+        this.pitchUnsub();
+        this.pitchUnsub = null;
+      }
+      pitchSocket.disconnect();
+    },
     setScreenAlwaysOn() {
       // #ifdef APP-PLUS
       if (typeof plus !== 'undefined' && plus.device) {
@@ -321,6 +367,7 @@ export default {
       this.unbindKeys();
       this.stopMetronome();
       this.stopTimeClock();
+      this.disconnectPitchSocket();
       // #ifdef APP-PLUS
       if (this.nativeSoundPool) {
         try { this.nativeSoundPool.release(); } catch (e) { /* 忽略 */ }
@@ -876,5 +923,33 @@ export default {
   padding: 6px 12px;
   height: auto;
   border-radius: 6px;
+}
+
+.pitch-session {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(20, 26, 35, 0.85);
+  border: 1px solid rgba(185, 174, 230, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-label {
+  color: #97a3b6;
+  font-size: 10px;
+}
+
+.session-value {
+  color: #f5f7fa;
+  font-size: 12px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.session-host {
+  color: #b8c6dc;
+  font-size: 10px;
 }
 </style>

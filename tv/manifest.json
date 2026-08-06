@@ -22,8 +22,10 @@
                 "minSdkVersion" : 21,
                 "targetSdkVersion" : 33,
                 "abiFilters" : [ "armeabi-v7a", "arm64-v8a" ],
+                "usesCleartextTraffic" : true,
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
                     "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>"
                 ]

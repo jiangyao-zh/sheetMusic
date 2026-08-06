@@ -9,5 +9,8 @@
     "generate:sheets:direct": "node tools/generate-sheets.mjs --input sheet-source --mode direct",
     "skill:import-sheets": "node skills/sheet-image-to-pages/scripts/import-sheets.mjs --input sheet-source --mode copy",
     "control:server": "node tools/control-server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.21.2"
   }
 }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getPitchProvider } from '@/services/PitchProvider'
+import { pitchSocketService, type PitchSocketStatus } from '@/services/PitchSocketService'
 import {
   IDLE_PITCH_RESULT,
   type PitchResult,
@@ -8,14 +9,42 @@ import {
 } from '@/types/pitch'
 import { statusColor, statusLabel } from '@/utils/format'
 
+const STORAGE_HOST = 'pitch_tv_host'
+const STORAGE_SESSION = 'pitch_tv_session'
+const STORAGE_PORT = 'pitch_tv_port'
+
 export const usePitchStore = defineStore('pitch', () => {
   const result = ref<PitchResult>({ ...IDLE_PITCH_RESULT })
   const running = ref(false)
   const error = ref('')
   const a4 = ref(440)
 
+  const tvHost = ref(uni.getStorageSync(STORAGE_HOST) || '')
+  const tvSession = ref(uni.getStorageSync(STORAGE_SESSION) || 'default')
+  const tvPort = ref(Number(uni.getStorageSync(STORAGE_PORT)) || 9091)
+  const castEnabled = ref(false)
+  const socketStatus = ref<PitchSocketStatus>('idle')
+  const socketDetail = ref('')
+
   const label = computed(() => statusLabel(result.value))
   const color = computed(() => statusColor(result.value))
+  const socketLabel = computed(() => {
+    switch (socketStatus.value) {
+      case 'connected':
+        return '已连接 TV'
+      case 'connecting':
+        return '连接中…'
+      case 'error':
+        return '连接异常'
+      default:
+        return '未连接'
+    }
+  })
+
+  pitchSocketService.onStatus((status, detail) => {
+    socketStatus.value = status
+    socketDetail.value = detail || ''
+  })
 
   async function start(options: PitchStartOptions = {}) {
     if (running.value) return
@@ -34,6 +63,9 @@ export const usePitchStore = defineStore('pitch', () => {
     try {
       await provider.start(opts, (data) => {
         result.value = data
+        if (castEnabled.value) {
+          pitchSocketService.publish(data)
+        }
       })
     } catch (e) {
       running.value = false
@@ -55,6 +87,34 @@ export const usePitchStore = defineStore('pitch', () => {
 
   function setA4(value: number) {
     a4.value = value
+    pitchSocketService.setA4(value)
+  }
+
+  function saveCastConfig() {
+    uni.setStorageSync(STORAGE_HOST, tvHost.value.trim())
+    uni.setStorageSync(STORAGE_SESSION, tvSession.value.trim() || 'default')
+    uni.setStorageSync(STORAGE_PORT, String(tvPort.value || 9091))
+  }
+
+  function connectTv() {
+    saveCastConfig()
+    if (!tvHost.value.trim()) {
+      error.value = '请填写 TV / 中继服务器 IP'
+      return
+    }
+    castEnabled.value = true
+    pitchSocketService.setA4(a4.value)
+    pitchSocketService.connect({
+      host: tvHost.value.trim(),
+      port: tvPort.value || 9091,
+      session: tvSession.value.trim() || 'default',
+      a4: a4.value,
+    })
+  }
+
+  function disconnectTv() {
+    castEnabled.value = false
+    pitchSocketService.disconnect()
   }
 
   return {
@@ -64,9 +124,19 @@ export const usePitchStore = defineStore('pitch', () => {
     a4,
     label,
     color,
+    tvHost,
+    tvSession,
+    tvPort,
+    castEnabled,
+    socketStatus,
+    socketDetail,
+    socketLabel,
     start,
     stop,
     setTargetNote,
     setA4,
+    connectTv,
+    disconnectTv,
+    saveCastConfig,
   }
 })

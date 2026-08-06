@@ -109,4 +109,4 @@ cent = 1200 \cdot \log_2(f_{actual} / f_{target})
 
 - `setTargetNote(note)`：对接 MusicXML 目标音
 - 多音/和弦：需另选算法（如多峰谱、NMF），不在本模块内硬编码
-- TV 投屏：前端通过 WebSocket/局域网推送 `PitchResult` JSON 即可
+- TV 投屏：手机 `PitchSocketService` 经 `ws://host:9091/ws/pitch` 推送 `PitchResult` JSON；TV 详情页节拍器下方订阅显示（不传 PCM）

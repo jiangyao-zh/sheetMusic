@@ -46,6 +46,26 @@ npm run dev:h5
 
 浏览器打开后点击「开始检测」，会使用 `MockPitchProvider` 模拟音高数据，便于调试 UI。
 
+### 投屏到 TV（WebSocket）
+
+1. 电脑启动中继（与 TV 控制服务同一进程）：
+
+```bash
+cd tv
+npm install
+npm run control:server
+```
+
+2. TV 进入「乐谱详情」，记下右侧 **音准会话**；列表页也会显示同一会话 ID  
+3. 手机 tuner 填写：
+   - 中继 IP：电脑局域网 IP（如 `192.168.1.8`）
+   - 会话：与 TV 一致
+   - 端口：`9091`
+4. 点 **连接 TV**，再 **开始检测**  
+5. TV 节拍器下方实时显示 note / frequency / cent / score  
+
+说明：只推送分析结果 JSON，不传 PCM。手机与 TV 需与中继同局域网。
+
 ### 算法回归（不依赖 Android SDK）
 
 ```bash

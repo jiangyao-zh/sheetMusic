@@ -2,7 +2,7 @@
   <view class="page">
     <view class="hero">
       <text class="title">小提琴音准检测</text>
-      <text class="subtitle">单音 · YIN · 实时评分</text>
+      <text class="subtitle">单音 · YIN · 实时评分 · TV 同步</text>
     </view>
 
     <ScoreCard :result="result" :color="color" :status-text="label" />
@@ -24,6 +24,47 @@
       </view>
     </view>
 
+    <view class="cast-card">
+      <view class="cast-head">
+        <text class="cast-title">投屏到 TV</text>
+        <text class="cast-status" :class="socketStatus">{{ socketLabel }}</text>
+      </view>
+      <view class="field">
+        <text class="field-label">中继 IP</text>
+        <input
+          class="field-input"
+          type="text"
+          v-model="tvHost"
+          placeholder="如 192.168.1.8"
+          @blur="store.saveCastConfig()"
+        />
+      </view>
+      <view class="field">
+        <text class="field-label">会话</text>
+        <input
+          class="field-input"
+          type="text"
+          v-model="tvSession"
+          placeholder="与 TV 一致"
+          @blur="store.saveCastConfig()"
+        />
+      </view>
+      <view class="field">
+        <text class="field-label">端口</text>
+        <input
+          class="field-input"
+          type="number"
+          v-model.number="tvPort"
+          @blur="store.saveCastConfig()"
+        />
+      </view>
+      <view class="cast-actions">
+        <button class="cast-btn" @click="store.connectTv()">连接 TV</button>
+        <button class="cast-btn ghost" @click="store.disconnectTv()">断开</button>
+      </view>
+      <text v-if="socketDetail" class="cast-detail">{{ socketDetail }}</text>
+    </view>
+
     <view v-if="error" class="error">
       <text>{{ error }}</text>
     </view>
@@ -35,7 +76,7 @@
     </view>
 
     <text class="hint">
-      H5 使用模拟音源；真机需离线打包并授权麦克风。
+      音准在手机端算完后，经 WebSocket 只推送 note/frequency/cent/score；不传 PCM。
     </text>
   </view>
 </template>
@@ -48,7 +89,20 @@ import ScoreCard from '@/components/ScoreCard.vue'
 import { usePitchStore } from '@/stores/pitch'
 
 const store = usePitchStore()
-const { result, running, error, a4, label, color } = storeToRefs(store)
+const {
+  result,
+  running,
+  error,
+  a4,
+  label,
+  color,
+  tvHost,
+  tvSession,
+  tvPort,
+  socketStatus,
+  socketDetail,
+  socketLabel,
+} = storeToRefs(store)
 const a4Options = [440, 442, 443]
 
 function onSelectA4(hz: number) {
@@ -69,6 +123,7 @@ function toggle() {
 
 onUnload(() => {
   store.stop()
+  store.disconnectTv()
 })
 </script>
 
@@ -122,6 +177,78 @@ onUnload(() => {
   background: #243044;
   border-color: #3d8bfd;
   color: #79b8ff;
+}
+.cast-card {
+  margin-top: 28rpx;
+  background: #1a1f2b;
+  border: 1px solid #2a3140;
+  border-radius: 24rpx;
+  padding: 24rpx;
+}
+.cast-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.cast-title {
+  color: #f3f5f7;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.cast-status {
+  font-size: 22rpx;
+  color: #8b93a7;
+}
+.cast-status.connected {
+  color: #3dd68c;
+}
+.cast-status.connecting,
+.cast-status.error {
+  color: #e3b341;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+.field-label {
+  width: 110rpx;
+  color: #8b93a7;
+  font-size: 24rpx;
+}
+.field-input {
+  flex: 1;
+  background: #0f1115;
+  border: 1px solid #2a3140;
+  border-radius: 12rpx;
+  color: #f3f5f7;
+  font-size: 26rpx;
+  padding: 12rpx 16rpx;
+}
+.cast-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+.cast-btn {
+  flex: 1;
+  background: #3d8bfd;
+  color: #fff;
+  border: none;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+}
+.cast-btn.ghost {
+  background: #2a3140;
+}
+.cast-detail {
+  display: block;
+  margin-top: 12rpx;
+  color: #6b7280;
+  font-size: 20rpx;
+  word-break: break-all;
 }
 .error {
   margin-top: 24rpx;

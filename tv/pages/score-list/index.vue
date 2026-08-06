@@ -46,6 +46,8 @@
       <image class="qr" :src="qrCodeUrl" mode="aspectFit" />
       <text class="qr-hint">扫码继续浏览</text>
       <text class="qr-url">{{ manageUrl }}</text>
+      <text class="pitch-session-label">音准会话（填到手机）</text>
+      <text class="pitch-session-value">{{ sessionId }}</text>
     </view>
   </view>
 </template>
@@ -384,17 +386,24 @@ export default {
       }
     },
     initSession() {
-      if (typeof location === 'undefined') return;
-      const hash = location.hash || '';
-      const queryIndex = hash.indexOf('?');
-      if (queryIndex >= 0) {
-        const query = new URLSearchParams(hash.slice(queryIndex + 1));
-        const session = query.get('session');
-        if (session) this.sessionId = session;
+      const stored = uni.getStorageSync('tv_session_id');
+      if (stored) this.sessionId = stored;
+
+      if (typeof location !== 'undefined') {
+        const hash = location.hash || '';
+        const queryIndex = hash.indexOf('?');
+        if (queryIndex >= 0) {
+          const query = new URLSearchParams(hash.slice(queryIndex + 1));
+          const session = query.get('session');
+          if (session) this.sessionId = session;
+        }
       }
+
       if (!this.sessionId || this.sessionId === 'default') {
         this.sessionId = `tv-${Date.now().toString(36)}`;
       }
+      uni.setStorageSync('tv_session_id', this.sessionId);
+      uni.setStorageSync('tv_pitch_session', this.sessionId);
     },
     connectControlChannel() {
       if (typeof EventSource === 'undefined' || typeof location === 'undefined') return;
@@ -755,6 +764,22 @@ export default {
   margin-top: 6px;
   font-size: 13px;
   color: #9ca7bb;
+  text-align: center;
+  word-break: break-all;
+}
+.pitch-session-label {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #97a3b6;
+  text-align: center;
+}
+.pitch-session-value {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #42ef94;
   text-align: center;
   word-break: break-all;
 }

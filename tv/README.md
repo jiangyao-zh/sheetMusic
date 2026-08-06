@@ -42,10 +42,22 @@ TV 端建议读取后台公开接口，不走后台登录态。
 2) 另开终端启动控制服务：
 
 ```bash
+npm install
 npm run control:server
 ```
 
 默认端口：`9091`
+
+同时提供：
+- `GET /events` + `POST /action`：原有 SSE 管理通道（H5）
+- `WS /ws/pitch?session=xxx&role=phone|tv`：手机音准实时投屏
+
+### 手机音准投屏（WebSocket）
+1) 电脑运行 `npm run control:server`  
+2) TV 打开乐谱详情页，右侧节拍器下方显示「手机音准」  
+3) 列表页 / 详情页可见 **音准会话** ID  
+4) 手机 tuner 填写电脑 IP + 同一会话，连接后开始检测  
+5) TV 实时显示音符、频率、偏差、评分  
 
 ### 手机扫码管理
 1) 打开大屏列表页，显示二维码与管理链接  
