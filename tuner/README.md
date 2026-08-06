@@ -70,7 +70,13 @@ npm run package:apk
 - Android 签名证书（正式包）
 - Android Studio + 离线 SDK
 
-无 SDK 时仍可用 `android` 工程中的 `DebugActivity` 在真机直接验证麦克风 + YIN（不经过 uni 运行时）。
+无 SDK 时仍可用 `android` 工程中的 `DebugActivity` 验证：
+
+1. Android Studio 打开 `tuner/android`，Run 到模拟器/真机  
+2. 先点 **「模拟 A4」**：不需麦克风，直接喂合成正弦波，确认算法与 UI  
+3. 再点 **「麦克风检测」**：看界面上的 `RMS`；一直 `no_signal` 且 RMS≈0 说明没采到声  
+
+模拟器收音：Extended Controls（`…`）→ Microphone → 打开 *Virtual microphone uses host audio input*。收音不稳时优先用真机。
 
 ## 插件 JS 接口
 
