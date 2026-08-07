@@ -8,7 +8,9 @@
     "generate:sheets": "node tools/generate-sheets.mjs --input sheet-source --mode copy",
     "generate:sheets:direct": "node tools/generate-sheets.mjs --input sheet-source --mode direct",
     "skill:import-sheets": "node skills/sheet-image-to-pages/scripts/import-sheets.mjs --input sheet-source --mode copy",
-    "control:server": "node tools/control-server.mjs"
+    "control:server": "node tools/control-server.mjs",
+    "assets:check": "bash scripts/ensure-pitch-sprites.sh",
+    "sync:www": "bash scripts/sync-www.sh"
   },
   "dependencies": {
     "ws": "^8.21.2"

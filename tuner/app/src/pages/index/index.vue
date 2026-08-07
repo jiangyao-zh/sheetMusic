@@ -82,8 +82,9 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { onUnload } from '@dcloudio/uni-app'
+import { onShow, onHide, onUnload } from '@dcloudio/uni-app'
 import PitchMeter from '@/components/PitchMeter.vue'
 import ScoreCard from '@/components/ScoreCard.vue'
 import { usePitchStore } from '@/stores/pitch'
@@ -102,8 +103,29 @@ const {
   socketStatus,
   socketDetail,
   socketLabel,
+  castEnabled,
 } = storeToRefs(store)
 const a4Options = [440, 442, 443]
+
+function setKeepScreenOn(on: boolean) {
+  try {
+    uni.setKeepScreenOn({ keepScreenOn: on })
+  } catch {
+    // ignore
+  }
+  // #ifdef APP-PLUS
+  try {
+    // plus.device.setWakelock：息屏后仍尽量保活（配合原生前台服务）
+    // @ts-expect-error plus inject
+    if (typeof plus !== 'undefined' && plus.device && plus.device.setWakelock) {
+      // @ts-expect-error plus inject
+      plus.device.setWakelock(on)
+    }
+  } catch {
+    // ignore
+  }
+  // #endif
+}
 
 function onSelectA4(hz: number) {
   store.setA4(hz)
@@ -121,9 +143,31 @@ function toggle() {
   }
 }
 
+watch(
+  [running, castEnabled, socketStatus],
+  ([isRunning, castOn, sock]) => {
+    const need = !!(isRunning || castOn || sock === 'connected' || sock === 'connecting')
+    setKeepScreenOn(need)
+  },
+  { immediate: true },
+)
+
+onShow(() => {
+  // 页面可见时默认亮屏，避免练琴时自动息屏
+  setKeepScreenOn(true)
+})
+
+onHide(() => {
+  // 若仍在检测/投屏，保持 wakelock；仅停止亮屏策略交给系统，原生 FGS 续跑
+  if (!running.value && !castEnabled.value) {
+    setKeepScreenOn(false)
+  }
+})
+
 onUnload(() => {
   store.stop()
   store.disconnectTv()
+  setKeepScreenOn(false)
 })
 </script>
 

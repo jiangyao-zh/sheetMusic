@@ -46,10 +46,22 @@
       <image class="qr" :src="qrCodeUrl" mode="aspectFit" />
       <text class="qr-hint">扫码继续浏览</text>
       <text class="qr-url">{{ manageUrl }}</text>
-      <text class="pitch-session-label">手机音准直连（填到手机）</text>
-      <text class="pitch-session-value">IP {{ pitchLanIp || '获取中…' }}</text>
-      <text class="pitch-session-value">会话 {{ sessionId }}</text>
-      <text class="pitch-session-label">端口 9091 · {{ pitchRelayHint }}</text>
+      <text class="pitch-session-label">挺准直连</text>
+      <view class="pitch-session-chips">
+        <view class="pitch-chip">
+          <text class="pitch-chip-label">IP</text>
+          <text class="pitch-chip-value">{{ pitchLanIp || '获取中…' }}</text>
+        </view>
+        <view class="pitch-chip">
+          <text class="pitch-chip-label">会话</text>
+          <text class="pitch-chip-value">{{ sessionId }}</text>
+        </view>
+        <view class="pitch-chip pitch-chip-port">
+          <text class="pitch-chip-label">端口</text>
+          <text class="pitch-chip-value">9091</text>
+        </view>
+      </view>
+      <text class="pitch-session-label">{{ pitchRelayHint }}</text>
     </view>
   </view>
 </template>
@@ -798,13 +810,37 @@ export default {
   color: #97a3b6;
   text-align: center;
 }
-.pitch-session-value {
+.pitch-session-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.pitch-chip {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(10, 14, 20, 0.55);
+  border: 1px solid rgba(66, 239, 148, 0.14);
+}
+.pitch-chip-port {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+.pitch-chip-label {
   display: block;
-  margin-top: 4px;
-  font-size: 14px;
-  font-weight: 700;
+  margin-bottom: 4px;
+  color: #6f7b8d;
+  font-size: 10px;
+  line-height: 1;
+}
+.pitch-chip-value {
+  display: block;
   color: #42ef94;
-  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
   word-break: break-all;
 }
 </style>

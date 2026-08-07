@@ -11,6 +11,7 @@
  *        phone 发布 PitchResult，tv 订阅显示
  */
 import http from 'node:http'
+import os from 'node:os'
 import { URL } from 'node:url'
 import { WebSocketServer } from 'ws'
 
@@ -18,6 +19,30 @@ const port = Number(process.env.CONTROL_PORT || 9091)
 const clientsBySession = new Map()
 /** @type {Map<string, Set<import('ws').WebSocket>>} */
 const pitchRooms = new Map()
+
+function listLanIps() {
+  const ips = []
+  const nets = os.networkInterfaces()
+  for (const name of Object.keys(nets || {})) {
+    for (const net of nets[name] || []) {
+      if (net.family !== 'IPv4' && net.family !== 4) continue
+      if (net.internal) continue
+      ips.push(net.address)
+    }
+  }
+  return ips
+}
+
+function primaryLanIp() {
+  const ips = listLanIps()
+  return (
+    ips.find((ip) => ip.startsWith('192.168.')) ||
+    ips.find((ip) => ip.startsWith('10.')) ||
+    ips.find((ip) => /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)) ||
+    ips[0] ||
+    ''
+  )
+}
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -73,11 +98,15 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`)
 
   if (req.method === 'GET' && url.pathname === '/health') {
+    const lanIps = listLanIps()
+    const lanIp = primaryLanIp()
     res.setHeader('Content-Type', 'application/json')
     res.end(
       JSON.stringify({
         ok: true,
         port,
+        lanIp,
+        lanIps,
         sseSessions: clientsBySession.size,
         pitchSessions: pitchRooms.size,
       }),
@@ -233,6 +262,8 @@ wss.on('connection', (ws, _req, url) => {
 })
 
 server.listen(port, '0.0.0.0', () => {
+  const lanIp = primaryLanIp()
   console.log(`[control-server] http://0.0.0.0:${port}`)
-  console.log(`[control-server] pitch ws   ws://0.0.0.0:${port}/ws/pitch?session=xxx&role=phone|tv`)
+  console.log(`[control-server] lan ip     ${lanIp || '(未检测到)'}`)
+  console.log(`[control-server] pitch ws   ws://${lanIp || '0.0.0.0'}:${port}/ws/pitch?session=xxx&role=phone|tv`)
 })

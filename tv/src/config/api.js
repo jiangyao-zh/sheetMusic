@@ -1,7 +1,8 @@
 /**
  * API 配置文件
  * 统一管理后端接口地址
- * 配置从根目录 .env 文件读取，通过 scripts/generate-config.js 生成
+ * 配置来自 tv/.env（或仓库根 .env），需先执行: npm run config:generate
+ * 生成文件: src/config/env.js（被 gitignore，运行时由本文件 import）
  */
 
 import { ENV_CONFIG } from './env';

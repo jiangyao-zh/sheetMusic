@@ -5,6 +5,7 @@
  */
 
 import { pitchRelay } from './pitchRelay'
+import { isLoopback } from '../utils/lanIp'
 
 const STORAGE_SESSION = 'tv_pitch_session'
 const STORAGE_HOST = 'tv_pitch_ws_host'
@@ -59,6 +60,12 @@ class PitchSocketClient {
   }
 
   snapshot() {
+    const phoneHost =
+      (this.lanIp && !isLoopback(this.lanIp) && this.lanIp) ||
+      (!isLoopback(this.host) && this.host) ||
+      this.lanIp ||
+      this.host ||
+      ''
     return {
       status: this.status,
       detail: this.detail,
@@ -69,8 +76,8 @@ class PitchSocketClient {
       lanIp: this.lanIp,
       relayMode: this.relayMode,
       lastMsgAt: this.lastMsgAt,
-      /** 给手机填写的地址（App 为局域网 IP，H5 为页面 host） */
-      phoneHost: this.lanIp || this.host,
+      /** 给手机填写的局域网地址（避免 localhost） */
+      phoneHost,
     }
   }
 

@@ -69,6 +69,20 @@ npm run control:server
 协议：`ws://{TV或电脑IP}:9091/ws/pitch?session=xxx&role=phone|tv`  
 原生模块源码：`tv/android/uniplugin_pitch_relay`；HBuilderX 插件声明：`tv/nativeplugins/PitchRelay`
 
+### 打包注意（挺准动画）
+静态资源在 `static/gif/`（`spr_stand.png` / `spr_walking.gif` / `spr_run.gif` / `xrk.png`），属于 uni-app `static` 目录，**发行 App 时会一并打入 APK**。
+
+打包前建议：
+
+```bash
+cd tv
+npm run assets:check
+# 离线 Android 壳同步：
+npm run sync:www
+```
+
+确认 APK / `assets/.../www/static/gif/` 内有上述三个文件后再安装验证。
+
 ### 手机扫码管理
 1) 打开大屏列表页，显示二维码与管理链接  
 2) 手机扫码（或直接访问管理链接）  

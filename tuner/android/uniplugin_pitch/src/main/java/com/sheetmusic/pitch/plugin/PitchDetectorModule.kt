@@ -1,10 +1,12 @@
 package com.sheetmusic.pitch.plugin
 
+import android.app.Activity
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import com.sheetmusic.pitch.algorithm.PitchAnalyzer
 import com.sheetmusic.pitch.audio.AudioRecorder
+import com.sheetmusic.pitch.keepalive.KeepAliveController
 import com.sheetmusic.pitch.model.PitchResult
 import io.dcloud.feature.uniapp.annotation.UniJSMethod
 import io.dcloud.feature.uniapp.bridge.UniJSCallback
@@ -27,6 +29,7 @@ class PitchDetectorModule : UniModule() {
     private var analyzeThread: HandlerThread? = null
     private var analyzeHandler: Handler? = null
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var keepAliveHeld = false
 
     @UniJSMethod(uiThread = true)
     fun start(options: Map<String, Any>?, callback: UniJSCallback?) {
@@ -38,6 +41,13 @@ class PitchDetectorModule : UniModule() {
         val bufferSize = (options?.get("bufferSize") as? Number)?.toInt()
             ?: AudioRecorder.DEFAULT_BUFFER_SIZE
         val a4 = (options?.get("a4") as? Number)?.toDouble() ?: 440.0
+
+        val ctx = mUniSDKInstance ?: return
+        if (ctx is Activity) {
+            KeepAliveController.bindActivity(ctx)
+        }
+        KeepAliveController.acquire(ctx, keepScreenOn = true)
+        keepAliveHeld = true
 
         analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = a4)
         val thread = HandlerThread("pitch-analyze").also { it.start() }
@@ -104,5 +114,12 @@ class PitchDetectorModule : UniModule() {
         analyzeHandler = null
         analyzeThread = null
         mainHandler.removeCallbacksAndMessages(null)
+        if (keepAliveHeld) {
+            val ctx = mUniSDKInstance
+            if (ctx != null) {
+                KeepAliveController.release(ctx)
+            }
+            keepAliveHeld = false
+        }
     }
 }

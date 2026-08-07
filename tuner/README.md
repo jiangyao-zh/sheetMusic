@@ -48,6 +48,12 @@ npm run dev:h5
 
 浏览器打开后点击「开始检测」，会使用 `MockPitchProvider` 模拟音高数据，便于调试 UI。
 
+### 不息屏 / 息屏续跑
+
+- App 打开或检测中会尽量保持亮屏（`FLAG_KEEP_SCREEN_ON` / `uni.setKeepScreenOn`）
+- 开始麦克风检测或投屏后，启动前台服务 + `PARTIAL_WAKE_LOCK`，息屏后仍继续收音并推送到 TV
+- 通知栏显示「音准检测运行中」；Android 13+ 需允许通知权限
+
 ### 投屏到 TV（WebSocket）
 
 中继默认跑在 **TV 本机**（`PitchRelay`），手机直连 TV 局域网 IP。

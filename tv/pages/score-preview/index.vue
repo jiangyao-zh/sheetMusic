@@ -14,8 +14,15 @@
 
     <view class="right-section">
       <view class="time-info-block">
-        <text class="current-time">{{ currentTimeWithSeconds }}</text>
-        <text class="current-date-cn">{{ chineseDateText }}</text>
+        <view class="time-text-col">
+          <text class="current-time">{{ currentTimeWithSeconds }}</text>
+          <text class="current-date-cn">{{ chineseDateText }}</text>
+        </view>
+        <image
+          class="time-mascot"
+          src="/static/gif/xrk.png"
+          mode="aspectFit"
+        />
       </view>
       
       <view class="info-block">
@@ -64,11 +71,21 @@
       />
 
       <view class="pitch-session">
-        <text class="session-label">手机请填 TV IP</text>
-        <text class="session-value">{{ pitchPhoneHost || '获取中…' }}</text>
-        <text class="session-label">会话</text>
-        <text class="session-value">{{ pitchSession }}</text>
-        <text class="session-host">端口 {{ pitchPort }} · 本机订阅 {{ pitchHost }}</text>
+        <text class="session-caption">手机连接信息</text>
+        <view class="session-chips">
+          <view class="session-chip">
+            <text class="chip-label">IP</text>
+            <text class="chip-value">{{ pitchPhoneHost || '获取中…' }}</text>
+          </view>
+          <view class="session-chip">
+            <text class="chip-label">会话</text>
+            <text class="chip-value">{{ pitchSession || '--' }}</text>
+          </view>
+          <view class="session-chip chip-port">
+            <text class="chip-label">端口</text>
+            <text class="chip-value">{{ pitchPort }}</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -769,9 +786,19 @@ export default {
   border-radius: 10px;
   padding: 10px 12px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   border: 1px solid rgba(185, 174, 230, 0.2);
+}
+
+.time-text-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
 
 .current-time {
@@ -779,14 +806,22 @@ export default {
   font-weight: 700;
   color: #f1c64d;
   letter-spacing: 1px;
-  text-align: center;
+  text-align: left;
+  line-height: 1.15;
 }
 
 .current-date-cn {
   font-size: 14px;
   color: #b8c6dc;
-  text-align: center;
-  margin-top: 2px;
+  text-align: left;
+  line-height: 1.2;
+}
+
+/* 与时间+日期两行总高度对齐（约 23+14+间距） */
+.time-mascot {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
 }
 
 .elapsed-time {
@@ -931,29 +966,55 @@ export default {
 
 .pitch-session {
   margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(20, 26, 35, 0.85);
-  border: 1px solid rgba(185, 174, 230, 0.15);
+  padding: 10px 12px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(28, 36, 48, 0.95) 0%, rgba(18, 24, 34, 0.92) 100%);
+  border: 1px solid rgba(66, 239, 148, 0.12);
+}
+
+.session-caption {
+  display: block;
+  margin-bottom: 8px;
+  color: #7f8a9c;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+
+.session-chips {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.session-label {
-  color: #97a3b6;
+.session-chip {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(10, 14, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.session-chip.chip-port {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+
+.chip-label {
+  display: block;
+  margin-bottom: 4px;
+  color: #6f7b8d;
   font-size: 10px;
+  line-height: 1;
 }
 
-.session-value {
-  color: #f5f7fa;
-  font-size: 12px;
-  font-weight: 700;
+.chip-value {
+  display: block;
+  color: #e8eef7;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
   word-break: break-all;
-}
-
-.session-host {
-  color: #b8c6dc;
-  font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 </style>

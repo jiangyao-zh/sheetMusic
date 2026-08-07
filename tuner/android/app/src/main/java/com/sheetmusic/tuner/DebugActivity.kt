@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -25,6 +26,7 @@ import androidx.core.content.ContextCompat
 import com.sheetmusic.pitch.algorithm.PitchAnalyzer
 import com.sheetmusic.pitch.audio.AudioPreprocessor
 import com.sheetmusic.pitch.audio.AudioRecorder
+import com.sheetmusic.pitch.keepalive.KeepAliveController
 import com.sheetmusic.pitch.model.PitchResult
 import kotlin.math.PI
 import kotlin.math.abs
@@ -52,6 +54,7 @@ class DebugActivity : AppCompatActivity() {
     private var runningMic = false
     private var runningSim = false
     private var castConnected = false
+    private var keepAliveHeld = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var simPhase = 0.0
@@ -93,10 +96,16 @@ class DebugActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        KeepAliveController.bindActivity(this)
+        // App 打开期间尽量不息屏；检测/投屏时再加 wake lock + 前台服务
+        KeepAliveController.setScreenAlwaysOn(this, true)
+        ensureNotificationPermission()
+
         castClient = PitchCastClient { status, detail ->
             castConnected = status == "connected"
             castBtn.text = if (castConnected) "断开 TV" else "连接 TV"
             castStatusView.text = "投屏状态: $status\n$detail"
+            syncKeepAlive()
         }
 
         val root = ScrollView(this)
@@ -117,6 +126,7 @@ class DebugActivity : AppCompatActivity() {
                 append("1. 下方填写 TV 显示的局域网 IP / 会话 / 端口，点「连接 TV」\n")
                 append("2. 再点「模拟 A4」或「麦克风检测」\n")
                 append("（中继跑在 TV 上，无需电脑 control:server）\n")
+                append("（App 打开会尽量不息屏；检测中息屏也会继续收音/推送）\n")
             }
             setTextColor(0xFFF3F5F7.toInt())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
@@ -196,6 +206,8 @@ class DebugActivity : AppCompatActivity() {
     private fun toggleCast() {
         if (castConnected) {
             castClient.disconnect()
+            castConnected = false
+            syncKeepAlive()
             return
         }
         val host = hostInput.text.toString().trim()
@@ -215,10 +227,35 @@ class DebugActivity : AppCompatActivity() {
             .putString("port", port.toString())
             .apply()
         castClient.connect(host, port, session, a4 = 440.0)
+        syncKeepAlive()
     }
 
     private fun publishCast(result: PitchResult) {
         castClient.publish(result)
+    }
+
+    private fun syncKeepAlive() {
+        val need = runningMic || runningSim || castConnected
+        if (need && !keepAliveHeld) {
+            KeepAliveController.acquire(this, keepScreenOn = true)
+            keepAliveHeld = true
+        } else if (!need && keepAliveHeld) {
+            KeepAliveController.release(this)
+            keepAliveHeld = false
+        }
+    }
+
+    private fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                1002,
+            )
+        }
     }
 
     private fun toggleSim() {
@@ -233,6 +270,7 @@ class DebugActivity : AppCompatActivity() {
         simPhase = 0.0
         simBtn.text = "停止模拟"
         micBtn.isEnabled = false
+        syncKeepAlive()
         handler.post(simRunnable)
     }
 
@@ -242,6 +280,7 @@ class DebugActivity : AppCompatActivity() {
         simBtn.text = "模拟 A4（不需麦克风）"
         micBtn.isEnabled = true
         if (!runningMic) statusView.text = "已停止模拟"
+        syncKeepAlive()
     }
 
     private fun toggleMic() {
@@ -274,6 +313,7 @@ class DebugActivity : AppCompatActivity() {
         micBtn.text = "停止麦克风"
         simBtn.isEnabled = false
         statusView.text = "麦克风启动中…"
+        syncKeepAlive()
         try {
             rec.start { pcm, count ->
                 micFrame++
@@ -300,6 +340,7 @@ class DebugActivity : AppCompatActivity() {
             micBtn.text = "麦克风检测"
             simBtn.isEnabled = true
             statusView.text = "麦克风启动失败：\n${e.message}\n\n请检查权限，或改用真机。"
+            syncKeepAlive()
         }
     }
 
@@ -313,6 +354,7 @@ class DebugActivity : AppCompatActivity() {
         micBtn.text = "麦克风检测"
         simBtn.isEnabled = true
         if (!runningSim) statusView.text = "已停止麦克风"
+        syncKeepAlive()
     }
 
     private fun render(
@@ -415,6 +457,10 @@ class DebugActivity : AppCompatActivity() {
         stopSim()
         stopMic()
         castClient.disconnect()
+        castConnected = false
+        KeepAliveController.setScreenAlwaysOn(this, false)
+        KeepAliveController.forceRelease(this)
+        keepAliveHeld = false
         super.onDestroy()
     }
 

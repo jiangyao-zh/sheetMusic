@@ -118,17 +118,18 @@ class RelayHostActivity : AppCompatActivity() {
         val port = st["port"]
         val session = sessionInput.text.toString().trim().ifEmpty { "default" }
         val err = st["error"]?.toString().orEmpty()
+        val emulatorHint = if (lanIp.startsWith("10.0.2.") || lanIp == "0.0.0.0") {
+            "\n提示: 当前像是模拟器内网 IP，真机请填电脑局域网 IP，并做 adb forward / 端口桥接。\n"
+        } else {
+            ""
+        }
         statusView.text = buildString {
-            append("乐谱 TV · 内嵌音准中继\n\n")
+            append("乐谱 TV · 内嵌音准中继（挺准）\n\n")
             append(if (running) "状态: 运行中\n" else "状态: 已停止\n")
-            append("TV IP: $lanIp\n")
-            append("端口: $port\n")
-            append("会话: $session\n\n")
-            append("手机填写：\n")
-            append("  中继 IP = $lanIp\n")
-            append("  会话   = $session\n")
-            append("  端口   = $port\n\n")
+            append("IP：$lanIp；会话：$session；端口：$port；\n\n")
+            append("手机填写上述一行信息\n")
             append("WS: ws://$lanIp:$port/ws/pitch?session=$session&role=phone\n")
+            append(emulatorHint)
             if (err.isNotBlank()) append("\n错误: $err\n")
             append("\n手机与 TV 需同一 Wi-Fi；无需再开电脑 control:server。")
         }

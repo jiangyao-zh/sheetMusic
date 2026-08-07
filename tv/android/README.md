@@ -26,6 +26,17 @@ cd tv/android
    或并入离线打包壳并注册 `com.sheetmusic.pitchrelay.plugin.PitchRelayModule`
 2. `manifest.json` 已声明 `nativePlugins.PitchRelay`
 3. 前端 `pitchRelay.start()` → TV 页订阅 `127.0.0.1`，界面展示 `lanIp` 给手机
+4. **动画资源必须打进 APK**：`tv/static/gif/` 下的  
+   `spr_stand.png` / `spr_walking.gif` / `spr_run.gif`  
+   - HBuilderX 发行会自动带上整个 `static/`  
+   - 离线壳同步请执行：
+
+```bash
+cd tv
+npm run assets:check   # 检查 gif 是否齐全
+# 先构建 App 资源，再：
+npm run sync:www       # 同步 www，并强制拷贝 static/gif → assets/.../www/static/gif
+```
 
 ## 协议
 
