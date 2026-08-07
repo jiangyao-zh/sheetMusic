@@ -30,12 +30,12 @@
         <text class="cast-status" :class="socketStatus">{{ socketLabel }}</text>
       </view>
       <view class="field">
-        <text class="field-label">中继 IP</text>
+        <text class="field-label">TV IP</text>
         <input
           class="field-input"
           type="text"
           v-model="tvHost"
-          placeholder="如 192.168.1.8"
+          placeholder="TV 上显示的局域网 IP"
           @blur="store.saveCastConfig()"
         />
       </view>

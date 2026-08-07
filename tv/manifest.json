@@ -11,6 +11,22 @@
         "compilerVersion" : 3,
         "fullscreen" : true,
         "screenOrientation" : [ "landscape-primary", "landscape-secondary" ],
+        "nativePlugins" : {
+            "PitchRelay" : {
+                "__plugin_info__" : {
+                    "name" : "PitchRelay",
+                    "description" : "TV 内嵌音准 WebSocket 中继",
+                    "platforms" : "Android",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {}
+                }
+            }
+        },
         "splashscreen" : {
             "alwaysShowBeforeRender" : true,
             "waiting" : true,

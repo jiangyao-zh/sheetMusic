@@ -1,0 +1,23 @@
+{
+  "name": "PitchRelay",
+  "id": "PitchRelay",
+  "version": "1.0.0",
+  "description": "TV 内嵌音准 WebSocket 中继（手机直连 TV IP）",
+  "_dp_type": "nativeplugin",
+  "_dp_nativeplugin": {
+    "android": {
+      "plugins": [
+        {
+          "type": "module",
+          "name": "PitchRelay",
+          "class": "com.sheetmusic.pitchrelay.plugin.PitchRelayModule"
+        }
+      ],
+      "integrateType": "aar",
+      "minSdkVersion": "21",
+      "dependencies": [
+        "org.java-websocket:Java-WebSocket:1.5.6"
+      ]
+    }
+  }
+}

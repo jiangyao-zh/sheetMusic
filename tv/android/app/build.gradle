@@ -4,21 +4,15 @@ plugins {
 }
 
 android {
-    namespace 'com.sheetmusic.tuner'
+    namespace 'com.sheetmusic.tv'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.sheetmusic.tuner"
-        minSdk 26
+        applicationId "com.sheetmusic.tv"
+        minSdk 21
         targetSdk 33
         versionCode 100
         versionName "1.0.0"
-        multiDexEnabled true
-    }
-
-    signingConfigs {
-        // 正式打包时在 local.properties / CI 中注入证书路径
-        // storeFile file("release.keystore")
     }
 
     buildTypes {
@@ -39,23 +33,11 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    sourceSets {
-        main {
-            assets.srcDirs += ['src/main/assets']
-            jniLibs.srcDirs = ['libs']
-        }
-    }
 }
 
 dependencies {
-    implementation project(':uniplugin_pitch')
-
-    // 放入 DCloud 离线 SDK 的 aar/jar 后取消注释或直接 fileTree 引入
+    implementation project(':uniplugin_pitch_relay')
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }

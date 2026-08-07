@@ -40,6 +40,17 @@ tuner/android/app/libs/*.aar
 tuner/android/app/libs/*.jar
 tuner/android/**/*.keystore
 tuner/android/**/*.jks
+tv/android/.gradle/
+tv/android/build/
+tv/android/app/build/
+tv/android/uniplugin_pitch_relay/build/
+tv/android/local.properties
+tv/android/*.iml
+tv/android/.idea/
+tv/android/app/libs/*.aar
+tv/android/app/libs/*.jar
+tv/android/**/*.keystore
+tv/android/**/*.jks
 *.apk
 *.aab
 

@@ -52,12 +52,22 @@ npm run control:server
 - `GET /events` + `POST /action`：原有 SSE 管理通道（H5）
 - `WS /ws/pitch?session=xxx&role=phone|tv`：手机音准实时投屏
 
-### 手机音准投屏（WebSocket）
-1) 电脑运行 `npm run control:server`  
-2) TV 打开乐谱详情页，右侧节拍器下方显示「手机音准」  
-3) 列表页 / 详情页可见 **音准会话** ID  
-4) 手机 tuner 填写电脑 IP + 同一会话，连接后开始检测  
-5) TV 实时显示音符、频率、偏差、评分  
+### 手机音准投屏（WebSocket · TV 内嵌中继）
+
+产品路径：中继跑在 **TV 本机**，手机直连 TV 局域网 IP，无需电脑常开 Node。
+
+**推荐（TV APK）：**
+1) TV 安装集成了 `PitchRelay` 的乐谱 APK，或先装调试中继 APK：`tv/android` → `assembleDebug`  
+2) TV 打开列表/详情，记下显示的 **TV IP** 与 **会话**  
+3) 手机 tuner 填写：TV IP + 同一会话 + 端口 `9091` → 连接 TV → 开始检测  
+4) TV 节拍器下方实时显示音符 / 频率 / 偏差 / 评分  
+
+**H5 联调（仍可用电脑中继）：**
+1) `npm run control:server`  
+2) 手机填电脑 IP + 会话（与 H5 页面一致）
+
+协议：`ws://{TV或电脑IP}:9091/ws/pitch?session=xxx&role=phone|tv`  
+原生模块源码：`tv/android/uniplugin_pitch_relay`；HBuilderX 插件声明：`tv/nativeplugins/PitchRelay`
 
 ### 手机扫码管理
 1) 打开大屏列表页，显示二维码与管理链接  

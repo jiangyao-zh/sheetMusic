@@ -109,4 +109,4 @@ cent = 1200 \cdot \log_2(f_{actual} / f_{target})
 
 - `setTargetNote(note)`：对接 MusicXML 目标音
 - 多音/和弦：需另选算法（如多峰谱、NMF），不在本模块内硬编码
-- TV 投屏：手机 `PitchSocketService` 经 `ws://host:9091/ws/pitch` 推送 `PitchResult` JSON；TV 详情页节拍器下方订阅显示（不传 PCM）
+- TV 投屏：中继嵌在 TV 原生 `PitchRelay`（`ws://{TV局域网IP}:9091/ws/pitch`）；手机推送 `PitchResult` JSON，TV 本机订阅 `127.0.0.1` 并显示（不传 PCM）。H5 联调仍可用电脑 `control-server`

@@ -46,8 +46,10 @@
       <image class="qr" :src="qrCodeUrl" mode="aspectFit" />
       <text class="qr-hint">扫码继续浏览</text>
       <text class="qr-url">{{ manageUrl }}</text>
-      <text class="pitch-session-label">音准会话（填到手机）</text>
-      <text class="pitch-session-value">{{ sessionId }}</text>
+      <text class="pitch-session-label">手机音准直连（填到手机）</text>
+      <text class="pitch-session-value">IP {{ pitchLanIp || '获取中…' }}</text>
+      <text class="pitch-session-value">会话 {{ sessionId }}</text>
+      <text class="pitch-session-label">端口 9091 · {{ pitchRelayHint }}</text>
     </view>
   </view>
 </template>
@@ -57,6 +59,7 @@ import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getApiHost } from '@/src/config/api';
 import { syncAllImages, getLocalSyncedImages, needsFirstSync } from '@/src/utils/syncImages';
+import { pitchRelay } from '@/src/services/pitchRelay';
 
 const KEY_MAP = {
   13: 'enter',
@@ -122,10 +125,18 @@ export default {
       syncBtnFocused: false,
       isSyncing: false,
       syncProgress: '',
-      modalVisible: false
+      modalVisible: false,
+      pitchLanIp: '',
+      pitchRelayMode: ''
     };
   },
   computed: {
+    pitchRelayHint() {
+      if (this.pitchRelayMode === 'embedded') return 'TV 内嵌中继已启动';
+      if (this.pitchRelayMode === 'external') return 'H5 外置中继';
+      if (this.pitchRelayMode === 'missing-plugin') return '需集成 PitchRelay 或装中继调试 APK';
+      return '中继准备中';
+    },
     qrCodeUrl() {
       const apiHost = getApiHost();
       return `${apiHost}/public/uploads/qr_music.png`;
@@ -196,6 +207,7 @@ export default {
     this.initLayout();
     this.loadData();
     this.initSession();
+    this.startPitchRelay();
     this.connectControlChannel();
     this.startClock();
     this.initAppStartTime();
@@ -404,6 +416,18 @@ export default {
       }
       uni.setStorageSync('tv_session_id', this.sessionId);
       uni.setStorageSync('tv_pitch_session', this.sessionId);
+    },
+    async startPitchRelay() {
+      try {
+        const st = await pitchRelay.start({ port: 9091 });
+        this.pitchLanIp = st.lanIp || '';
+        this.pitchRelayMode = st.mode || '';
+        if (this.pitchLanIp) {
+          uni.setStorageSync('tv_pitch_lan_ip', this.pitchLanIp);
+        }
+      } catch (e) {
+        this.pitchRelayMode = 'missing-plugin';
+      }
     },
     connectControlChannel() {
       if (typeof EventSource === 'undefined' || typeof location === 'undefined') return;

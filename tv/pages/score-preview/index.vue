@@ -64,9 +64,11 @@
       />
 
       <view class="pitch-session">
-        <text class="session-label">音准会话</text>
+        <text class="session-label">手机请填 TV IP</text>
+        <text class="session-value">{{ pitchPhoneHost || '获取中…' }}</text>
+        <text class="session-label">会话</text>
         <text class="session-value">{{ pitchSession }}</text>
-        <text class="session-host">{{ pitchHost }}:{{ pitchPort }}</text>
+        <text class="session-host">端口 {{ pitchPort }} · 本机订阅 {{ pitchHost }}</text>
       </view>
     </view>
 
@@ -167,6 +169,7 @@ export default {
       pitchLastMsgAt: 0,
       pitchSession: '',
       pitchHost: '',
+      pitchPhoneHost: '',
       pitchPort: 9091,
       pitchUnsub: null
     };
@@ -290,6 +293,7 @@ export default {
         this.pitchLastMsgAt = snap.lastMsgAt || 0;
         this.pitchSession = snap.session || '';
         this.pitchHost = snap.host || '';
+        this.pitchPhoneHost = snap.phoneHost || snap.lanIp || '';
         this.pitchPort = snap.port || 9091;
       });
       pitchSocket.connect();

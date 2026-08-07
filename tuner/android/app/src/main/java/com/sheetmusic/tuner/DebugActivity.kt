@@ -1,6 +1,7 @@
 package com.sheetmusic.tuner
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
@@ -12,7 +13,9 @@ import android.text.style.AbsoluteSizeSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.TypedValue
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -22,6 +25,7 @@ import androidx.core.content.ContextCompat
 import com.sheetmusic.pitch.algorithm.PitchAnalyzer
 import com.sheetmusic.pitch.audio.AudioPreprocessor
 import com.sheetmusic.pitch.audio.AudioRecorder
+import com.sheetmusic.pitch.model.PitchResult
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
@@ -29,11 +33,17 @@ import kotlin.math.sin
 /**
  * 原生调试页：
  * 1) 模拟 A4（不依赖麦克风）
- * 2) 麦克风实测（显示帧计数 + RMS，便于判断是否采到声）
+ * 2) 麦克风实测
+ * 3) WebSocket 投屏到 TV（中继 IP / 会话 / 端口）
  */
 class DebugActivity : AppCompatActivity() {
 
     private lateinit var statusView: TextView
+    private lateinit var castStatusView: TextView
+    private lateinit var hostInput: EditText
+    private lateinit var sessionInput: EditText
+    private lateinit var portInput: EditText
+    private lateinit var castBtn: Button
     private lateinit var micBtn: Button
     private lateinit var simBtn: Button
 
@@ -41,11 +51,16 @@ class DebugActivity : AppCompatActivity() {
     private var analyzer: PitchAnalyzer? = null
     private var runningMic = false
     private var runningSim = false
+    private var castConnected = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var simPhase = 0.0
     private var simTick = 0
     private var micFrame = 0
+
+    private lateinit var castClient: PitchCastClient
+
+    private val prefs by lazy { getSharedPreferences("pitch_cast", Context.MODE_PRIVATE) }
 
     private val simRunnable = object : Runnable {
         override fun run() {
@@ -57,6 +72,7 @@ class DebugActivity : AppCompatActivity() {
             val hz = base + wobble
             val floats = synthesize(hz, AudioRecorder.DEFAULT_BUFFER_SIZE, AudioRecorder.DEFAULT_SAMPLE_RATE)
             val result = analyzer.analyzeFloat(floats)
+            publishCast(result)
             render(
                 mode = "模拟正弦波",
                 frame = simTick,
@@ -77,12 +93,19 @@ class DebugActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        castClient = PitchCastClient { status, detail ->
+            castConnected = status == "connected"
+            castBtn.text = if (castConnected) "断开 TV" else "连接 TV"
+            castStatusView.text = "投屏状态: $status\n$detail"
+        }
+
         val root = ScrollView(this)
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 96, 48, 48)
             setBackgroundColor(0xFF0F1115.toInt())
         }
+
         statusView = TextView(this).apply {
             text = buildString {
                 append("小提琴音准检测 · 调试页\n\n")
@@ -91,11 +114,38 @@ class DebugActivity : AppCompatActivity() {
                 append("· 但「帧计数」和「RMS」必须会变\n")
                 append("· 帧计数不动 = 麦克风根本没在采\n\n")
                 append("步骤：\n")
-                append("1. 先点「模拟 A4」看数字是否跳动\n")
-                append("2. 再点「麦克风检测」看帧计数是否增加\n")
+                append("1. 下方填写 TV 显示的局域网 IP / 会话 / 端口，点「连接 TV」\n")
+                append("2. 再点「模拟 A4」或「麦克风检测」\n")
+                append("（中继跑在 TV 上，无需电脑 control:server）\n")
             }
             setTextColor(0xFFF3F5F7.toInt())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        }
+
+        val castTitle = TextView(this).apply {
+            text = "投屏到 TV"
+            setTextColor(0xFFF3F5F7.toInt())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, 32, 0, 12)
+        }
+
+        hostInput = field("TV 局域网 IP", prefs.getString("host", "") ?: "")
+        sessionInput = field("会话（与 TV 一致）", prefs.getString("session", "") ?: "")
+        portInput = field("端口", prefs.getString("port", "9091") ?: "9091").apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        }
+
+        castStatusView = TextView(this).apply {
+            text = "投屏状态: idle"
+            setTextColor(0xFF8B93A7.toInt())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(0, 8, 0, 8)
+        }
+
+        castBtn = Button(this).apply {
+            text = "连接 TV"
+            setOnClickListener { toggleCast() }
         }
         simBtn = Button(this).apply {
             text = "模拟 A4（不需麦克风）"
@@ -105,11 +155,70 @@ class DebugActivity : AppCompatActivity() {
             text = "麦克风检测"
             setOnClickListener { toggleMic() }
         }
+
         panel.addView(statusView)
+        panel.addView(castTitle)
+        panel.addView(label("中继 IP"))
+        panel.addView(hostInput)
+        panel.addView(label("会话"))
+        panel.addView(sessionInput)
+        panel.addView(label("端口"))
+        panel.addView(portInput)
+        panel.addView(castStatusView)
+        panel.addView(castBtn)
         panel.addView(simBtn)
         panel.addView(micBtn)
         root.addView(panel)
         setContentView(root)
+    }
+
+    private fun label(text: String) = TextView(this).apply {
+        this.text = text
+        setTextColor(0xFF8B93A7.toInt())
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setPadding(0, 12, 0, 4)
+    }
+
+    private fun field(hint: String, value: String) = EditText(this).apply {
+        this.hint = hint
+        setText(value)
+        setTextColor(0xFFF3F5F7.toInt())
+        setHintTextColor(0xFF5C6578.toInt())
+        setBackgroundColor(0xFF1B2230.toInt())
+        setPadding(28, 24, 28, 24)
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
+    private fun toggleCast() {
+        if (castConnected) {
+            castClient.disconnect()
+            return
+        }
+        val host = hostInput.text.toString().trim()
+        val session = sessionInput.text.toString().trim()
+        val port = portInput.text.toString().trim().toIntOrNull() ?: 9091
+        if (host.isEmpty()) {
+            castStatusView.text = "投屏状态: error\n请填写 TV 局域网 IP"
+            return
+        }
+        if (session.isEmpty()) {
+            castStatusView.text = "投屏状态: error\n请填写与 TV 一致的会话 ID"
+            return
+        }
+        prefs.edit()
+            .putString("host", host)
+            .putString("session", session)
+            .putString("port", port.toString())
+            .apply()
+        castClient.connect(host, port, session, a4 = 440.0)
+    }
+
+    private fun publishCast(result: PitchResult) {
+        castClient.publish(result)
     }
 
     private fun toggleSim() {
@@ -172,6 +281,7 @@ class DebugActivity : AppCompatActivity() {
                 val rms = AudioPreprocessor.rms(floats)
                 val peak = floats.maxOfOrNull { abs(it) }?.toDouble() ?: 0.0
                 val r = analyzer?.analyzeFloat(floats)
+                if (r != null) publishCast(r)
                 render(
                     mode = "麦克风(${rec.activeSourceName})",
                     frame = micFrame,
@@ -247,7 +357,11 @@ class DebugActivity : AppCompatActivity() {
         appendPlain("模式: $mode\n")
         appendPlain("帧计数: $frame\n")
         appendPlain("音量RMS: ${"%.5f".format(rms)}   Peak: ${"%.5f".format(peak)}\n")
-        appendPlain("电平: [$meter]\n\n")
+        appendPlain("电平: [$meter]\n")
+        appendPlain(
+            "投屏: ${if (castConnected) "已连接" else "未连接"}\n\n",
+            color = if (castConnected) 0xFF3DD68C.toInt() else 0xFF8B93A7.toInt(),
+        )
 
         appendPlain("当前音符\n")
         appendBig("$note\n", 56, accent)
@@ -300,6 +414,7 @@ class DebugActivity : AppCompatActivity() {
     override fun onDestroy() {
         stopSim()
         stopMic()
+        castClient.disconnect()
         super.onDestroy()
     }
 
