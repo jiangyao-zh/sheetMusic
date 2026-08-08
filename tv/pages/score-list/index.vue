@@ -62,6 +62,7 @@ import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getApiHost } from '@/src/config/api';
 import { syncAllImages, getLocalSyncedImages, needsFirstSync } from '@/src/utils/syncImages';
 import { pitchRelay } from '@/src/services/pitchRelay';
+import { ensurePitchSession, isFourDigitSession } from '@/src/utils/pitchSession';
 
 const KEY_MAP = {
   13: 'enter',
@@ -388,24 +389,17 @@ export default {
       }
     },
     initSession() {
-      const stored = uni.getStorageSync('tv_session_id');
-      if (stored) this.sessionId = stored;
-
+      let preferred = '';
       if (typeof location !== 'undefined') {
         const hash = location.hash || '';
         const queryIndex = hash.indexOf('?');
         if (queryIndex >= 0) {
           const query = new URLSearchParams(hash.slice(queryIndex + 1));
           const session = query.get('session');
-          if (session) this.sessionId = session;
+          if (isFourDigitSession(session)) preferred = String(session).trim();
         }
       }
-
-      if (!this.sessionId || this.sessionId === 'default') {
-        this.sessionId = `tv-${Date.now().toString(36)}`;
-      }
-      uni.setStorageSync('tv_session_id', this.sessionId);
-      uni.setStorageSync('tv_pitch_session', this.sessionId);
+      this.sessionId = ensurePitchSession({ preferred });
     },
     async startPitchRelay() {
       try {

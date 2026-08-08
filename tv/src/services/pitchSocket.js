@@ -6,11 +6,13 @@
 
 import { pitchRelay } from './pitchRelay'
 import { isLoopback } from '../utils/lanIp'
+import { ensurePitchSession, isFourDigitSession } from '../utils/pitchSession'
 
 const STORAGE_SESSION = 'tv_pitch_session'
 const STORAGE_HOST = 'tv_pitch_ws_host'
 const STORAGE_PORT = 'tv_pitch_ws_port'
 const STORAGE_LAN = 'tv_pitch_lan_ip'
+const DEFAULT_PORT = 9091
 
 function isAppPlus() {
   try {
@@ -40,9 +42,9 @@ class PitchSocketClient {
     this.socket = null
     this.status = 'idle'
     this.detail = ''
-    this.session = uni.getStorageSync(STORAGE_SESSION) || ''
+    this.session = ensurePitchSession()
     this.host = defaultSubscribeHost()
-    this.port = Number(uni.getStorageSync(STORAGE_PORT)) || 9091
+    this.port = Number(uni.getStorageSync(STORAGE_PORT)) || DEFAULT_PORT
     this.lanIp = uni.getStorageSync(STORAGE_LAN) || ''
     this.latest = null
     this.listeners = new Set()
@@ -82,12 +84,7 @@ class PitchSocketClient {
   }
 
   ensureSession() {
-    if (!this.session || this.session === 'default') {
-      const fromList = uni.getStorageSync('tv_session_id')
-      this.session = fromList || `tv-${Date.now().toString(36)}`
-      uni.setStorageSync(STORAGE_SESSION, this.session)
-      uni.setStorageSync('tv_session_id', this.session)
-    }
+    this.session = ensurePitchSession({ preferred: this.session })
     return this.session
   }
 
@@ -97,13 +94,11 @@ class PitchSocketClient {
       uni.setStorageSync(STORAGE_HOST, this.host)
     }
     if (port) {
-      this.port = Number(port) || 9091
+      this.port = Number(port) || DEFAULT_PORT
       uni.setStorageSync(STORAGE_PORT, String(this.port))
     }
-    if (session) {
-      this.session = String(session).trim()
-      uni.setStorageSync(STORAGE_SESSION, this.session)
-      uni.setStorageSync('tv_session_id', this.session)
+    if (session && isFourDigitSession(session)) {
+      this.session = ensurePitchSession({ preferred: session })
     }
     if (lanIp) {
       this.lanIp = String(lanIp).trim()

@@ -267,12 +267,15 @@ export default {
 .pitch-block {
   background: #141a23;
   border-radius: 8px;
-  padding: 6px 6px 8px;
+  padding: 8px 8px 10px;
   margin-top: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: visible;
   border: 1px solid rgba(66, 239, 148, 0.18);
   box-sizing: border-box;
@@ -502,6 +505,16 @@ export default {
   font-size: 10px;
   font-weight: 600;
   line-height: 1.2;
+}
+
+@media screen and (max-height: 720px) {
+  .pitch-block {
+    padding: 6px 7px 8px;
+  }
+
+  .pitch-note {
+    font-size: 28px;
+  }
 }
 
 .activity-hint {

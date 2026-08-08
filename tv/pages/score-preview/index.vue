@@ -73,19 +73,15 @@
       </view>
 
       <view class="sidebar-panel pitch-session">
-        <text class="session-caption">手机连接信息</text>
-        <view class="session-rows">
-          <view class="session-row">
+        <view class="session-inline">
+          <view class="session-cell">
             <text class="chip-label">IP</text>
             <text class="chip-value">{{ pitchPhoneHost || '获取中…' }}</text>
           </view>
-          <view class="session-row">
+          <view class="session-divider"></view>
+          <view class="session-cell session-cell-code">
             <text class="chip-label">会话</text>
-            <text class="chip-value">{{ pitchSession || '--' }}</text>
-          </view>
-          <view class="session-row">
-            <text class="chip-label">端口</text>
-            <text class="chip-value">{{ pitchPort }}</text>
+            <text class="chip-value chip-code">{{ pitchSession || '--' }}</text>
           </view>
         </view>
       </view>
@@ -116,6 +112,7 @@ import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getLocalSyncedImages } from '@/src/utils/syncImages';
 import { pitchSocket } from '@/src/services/pitchSocket';
+import { ensurePitchSession } from '@/src/utils/pitchSession';
 import { disableAndroidTvFocusHighlight } from '@/src/utils/tvFocus';
 import MetronomePanel from '@/components/MetronomePanel.vue';
 import PitchDisplay from '@/components/PitchDisplay.vue';
@@ -190,7 +187,6 @@ export default {
       pitchSession: '',
       pitchHost: '',
       pitchPhoneHost: '',
-      pitchPort: 9091,
       pitchUnsub: null
     };
   },
@@ -307,16 +303,16 @@ export default {
   methods: {
     connectPitchSocket() {
       if (this.pitchUnsub) return;
-      const session = uni.getStorageSync('tv_session_id') || '';
-      pitchSocket.configure({ session: session || undefined });
+      const session = ensurePitchSession();
+      pitchSocket.configure({ session });
+      this.pitchSession = session;
       this.pitchUnsub = pitchSocket.onUpdate((snap) => {
         this.pitchSocketStatus = snap.status;
         this.pitchResult = snap.latest;
         this.pitchLastMsgAt = snap.lastMsgAt || 0;
-        this.pitchSession = snap.session || '';
+        this.pitchSession = snap.session || session;
         this.pitchHost = snap.host || '';
         this.pitchPhoneHost = snap.phoneHost || snap.lanIp || '';
-        this.pitchPort = snap.port || 9091;
       });
       pitchSocket.connect();
     },
@@ -742,10 +738,11 @@ export default {
   width: 256px;
   max-width: 256px;
   height: 100vh;
-  padding: 8px 8px 8px 0;
+  padding: 10px 8px 10px 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  justify-content: space-between;
+  gap: 10px;
   overflow: hidden;
   box-sizing: border-box;
   outline: none !important;
@@ -761,8 +758,11 @@ export default {
 }
 
 .pitch-panel {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .score-wrap {
@@ -990,52 +990,95 @@ export default {
 }
 
 .pitch-session {
-  padding: 6px 8px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+}
+
+.session-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  padding: 7px 8px;
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(28, 36, 48, 0.95) 0%, rgba(18, 24, 34, 0.92) 100%);
   border: 1px solid rgba(66, 239, 148, 0.12);
 }
 
-.session-caption {
-  display: block;
-  margin-bottom: 4px;
-  color: #7f8a9c;
-  font-size: 9px;
-  letter-spacing: 0.3px;
-}
-
-.session-rows {
+.session-cell {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.session-row {
-  display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  border-radius: 6px;
-  background: rgba(10, 14, 20, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 4px;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.session-cell-code {
+  flex: 0 0 auto;
+}
+
+.session-divider {
+  width: 1px;
+  height: 12px;
+  margin: 0 6px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .chip-label {
-  flex: 0 0 28px;
+  flex: 0 0 auto;
   color: #6f7b8d;
   font-size: 9px;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .chip-value {
-  flex: 1;
   min-width: 0;
   color: #c5ced9;
   font-size: 9px;
   font-weight: 500;
-  line-height: 1.3;
-  word-break: break-all;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-variant-numeric: tabular-nums;
+}
+
+.chip-code {
+  color: #42ef94;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* 低逻辑高度（模拟器/部分 TV）：保持可读间距，略减内边距避免溢出 */
+@media screen and (max-height: 720px) {
+  .right-section {
+    gap: 8px;
+    padding: 8px 6px 8px 0;
+  }
+
+  .time-info-block,
+  .info-block,
+  .metro-block {
+    padding: 5px 7px;
+  }
+
+  .session-inline {
+    padding: 6px 7px;
+  }
+
+  .chip-code {
+    font-size: 11px;
+  }
+
+  .current-time {
+    font-size: 15px;
+  }
 }
 </style>
