@@ -9,6 +9,15 @@ TV 端原生音准 WebSocket 中继。监听 `0.0.0.0:9091`，协议与 `tools/c
 3. `manifest.json` → `app-plus.nativePlugins.PitchRelay` 设为开启
 4. JS：`uni.requireNativePlugin('PitchRelay')`
 
+重打 AAR（勿把 uni stubs 打进包，否则云打包/自定义基座会与 `dc_weexsdk` 类冲突）：
+
+```bash
+cd tv/android
+./gradlew :uniplugin_pitch_relay:assembleRelease
+cp uniplugin_pitch_relay/build/outputs/aar/uniplugin_pitch_relay-release.aar \
+  ../nativeplugins/PitchRelay/android/
+```
+
 ## API
 
 ```js

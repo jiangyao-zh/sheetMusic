@@ -72,10 +72,10 @@
 
 <script>
 const STALE_MS = 800
-/** 半圆半径（px），外圈直径 = RADIUS * 2，必须为正圆被裁切的上半部分 */
-const RADIUS = 100
-const LABEL_RADIUS = 118
-const NEEDLE_RADIUS = 86
+/** 半圆半径（px），适配 TV 详情页右侧栏 256px 宽度 */
+const RADIUS = 62
+const LABEL_RADIUS = 76
+const NEEDLE_RADIUS = 52
 /** -50～+50 cent 映射到 -80°～+80° */
 const DEG_PER_CENT = 1.6
 /** 推送间隔阈值：更快用跑步，更慢用走路（手机检测约 66ms） */
@@ -266,30 +266,42 @@ export default {
 <style scoped>
 .pitch-block {
   background: #141a23;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 30px;
+  border-radius: 8px;
+  padding: 6px 6px 8px;
+  margin-top: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  overflow: visible;
   border: 1px solid rgba(66, 239, 148, 0.18);
+  box-sizing: border-box;
 }
 
 .pitch-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .pitch-title {
   color: #f5f7fa;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .pitch-link {
-  font-size: 11px;
+  font-size: 9px;
   color: #97a3b6;
+  flex-shrink: 1;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pitch-link.ok {
@@ -307,15 +319,19 @@ export default {
 .tuner-gauge {
   display: flex;
   justify-content: center;
-  padding-top: 6px;
+  padding: 2px 0 0;
+  overflow: visible;
+  width: 100%;
+  min-height: 66px;
 }
 
 /* 舞台宽=2R、高=R，圆环为正圆上半部分 → 与刻度同心 */
 .gauge-stage {
   position: relative;
-  width: 200px;
-  height: 100px;
+  width: 124px;
+  height: 62px;
   overflow: visible;
+  margin: 0 auto;
 }
 
 /* 单独裁切正圆上半部分，避免外圈被压扁 */
@@ -323,8 +339,8 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 200px;
-  height: 100px;
+  width: 124px;
+  height: 62px;
   overflow: hidden;
 }
 
@@ -332,10 +348,10 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 200px;
-  height: 200px;
+  width: 124px;
+  height: 124px;
   box-sizing: border-box;
-  border: 8px solid #242c38;
+  border: 5px solid #242c38;
   border-radius: 50%;
 }
 
@@ -373,10 +389,10 @@ export default {
 
 .scale-label {
   display: block;
-  width: 28px;
-  margin-left: -8px;
+  width: 24px;
+  margin-left: -6px;
   color: #697485;
-  font-size: 9px;
+  font-size: 8px;
   text-align: center;
   line-height: 1;
 }
@@ -413,36 +429,39 @@ export default {
 
 .pitch-readout {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: baseline;
-  column-gap: 10px;
-  margin-top: 8px;
-  padding: 0 8px 4px;
+  column-gap: 4px;
+  margin-top: 2px;
+  padding: 0 2px;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .note-group {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  min-width: 92px;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .pitch-note {
-  font-size: 64px;
+  font-size: 30px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 0;
   line-height: 1;
 }
 
 .pitch-octave {
-  margin-left: 3px;
-  font-size: 24px;
+  margin-left: 2px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .readout-side {
   color: #97a3b6;
-  font-size: 13px;
+  font-size: 9px;
   white-space: nowrap;
 }
 
@@ -451,19 +470,21 @@ export default {
 }
 
 .pitch-footer {
-  margin-top: 10px;
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .activity-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 48px;
+  gap: 6px;
+  min-height: 32px;
+  min-width: 0;
 }
 
 .activity-sprite {
-  width: 72px;
-  height: 48px;
+  width: 40px;
+  height: 28px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }
@@ -473,19 +494,21 @@ export default {
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .activity-label {
   color: #e8eef7;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
   line-height: 1.2;
 }
 
 .activity-hint {
   color: #8b95a7;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 400;
-  line-height: 1.3;
+  line-height: 1.35;
+  word-break: break-word;
 }
 </style>

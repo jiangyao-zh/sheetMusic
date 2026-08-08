@@ -22,7 +22,14 @@
       <text>请把乐谱图片放到 static/scores 目录下。</text>
     </view>
 
-    <scroll-view v-else class="list" scroll-y :scroll-into-view="focusAnchorId">
+    <scroll-view
+      v-else
+      class="list"
+      scroll-y
+      :scroll-into-view="focusAnchorId"
+      :show-scrollbar="false"
+      :focusable="false"
+    >
       <view class="grid" :style="{ gridTemplateColumns: `repeat(${cols}, ${itemSize}px)` }">
         <view
           v-for="(item, index) in displayImages"
@@ -45,23 +52,6 @@
       <text class="manage-label">扫码管理</text>
       <image class="qr" :src="qrCodeUrl" mode="aspectFit" />
       <text class="qr-hint">扫码继续浏览</text>
-      <text class="qr-url">{{ manageUrl }}</text>
-      <text class="pitch-session-label">挺准直连</text>
-      <view class="pitch-session-chips">
-        <view class="pitch-chip">
-          <text class="pitch-chip-label">IP</text>
-          <text class="pitch-chip-value">{{ pitchLanIp || '获取中…' }}</text>
-        </view>
-        <view class="pitch-chip">
-          <text class="pitch-chip-label">会话</text>
-          <text class="pitch-chip-value">{{ sessionId }}</text>
-        </view>
-        <view class="pitch-chip pitch-chip-port">
-          <text class="pitch-chip-label">端口</text>
-          <text class="pitch-chip-value">9091</text>
-        </view>
-      </view>
-      <text class="pitch-session-label">{{ pitchRelayHint }}</text>
     </view>
   </view>
 </template>
@@ -137,18 +127,10 @@ export default {
       syncBtnFocused: false,
       isSyncing: false,
       syncProgress: '',
-      modalVisible: false,
-      pitchLanIp: '',
-      pitchRelayMode: ''
+      modalVisible: false
     };
   },
   computed: {
-    pitchRelayHint() {
-      if (this.pitchRelayMode === 'embedded') return 'TV 内嵌中继已启动';
-      if (this.pitchRelayMode === 'external') return 'H5 外置中继';
-      if (this.pitchRelayMode === 'missing-plugin') return '需集成 PitchRelay 或装中继调试 APK';
-      return '中继准备中';
-    },
     qrCodeUrl() {
       const apiHost = getApiHost();
       return `${apiHost}/public/uploads/qr_music.png`;
@@ -172,10 +154,6 @@ export default {
         String(a.title).localeCompare(String(b.title), 'en', { numeric: true, sensitivity: 'base' })
       );
       return sorted.concat(remain);
-    },
-    manageUrl() {
-      if (typeof location === 'undefined') return '';
-      return `${location.origin}/#/pages/mobile-manage/index?session=${encodeURIComponent(this.sessionId)}`;
     },
     itemSize() {
       // TV 4K 下 rpx 会过大，改用 px 并限制尺寸区间
@@ -432,13 +410,12 @@ export default {
     async startPitchRelay() {
       try {
         const st = await pitchRelay.start({ port: 9091 });
-        this.pitchLanIp = st.lanIp || '';
-        this.pitchRelayMode = st.mode || '';
-        if (this.pitchLanIp) {
-          uni.setStorageSync('tv_pitch_lan_ip', this.pitchLanIp);
+        const lanIp = st.lanIp || '';
+        if (lanIp) {
+          uni.setStorageSync('tv_pitch_lan_ip', lanIp);
         }
       } catch (e) {
-        this.pitchRelayMode = 'missing-plugin';
+        // 详情页会展示连接信息；列表页仅启动中继
       }
     },
     connectControlChannel() {
@@ -685,6 +662,17 @@ export default {
 .list {
   height: calc(100vh - 175px);
   width: calc(100% - 340px);
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+.list:focus,
+.list:focus-visible,
+.list:active {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 .grid {
   display: grid;
@@ -794,53 +782,5 @@ export default {
   font-size: 18px;
   margin-top: 8px;
   text-align: center;
-}
-.qr-url {
-  display: block;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #9ca7bb;
-  text-align: center;
-  word-break: break-all;
-}
-.pitch-session-label {
-  display: block;
-  margin-top: 10px;
-  font-size: 12px;
-  color: #97a3b6;
-  text-align: center;
-}
-.pitch-session-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-.pitch-chip {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(10, 14, 20, 0.55);
-  border: 1px solid rgba(66, 239, 148, 0.14);
-}
-.pitch-chip-port {
-  flex: 0 0 auto;
-  min-width: 64px;
-}
-.pitch-chip-label {
-  display: block;
-  margin-bottom: 4px;
-  color: #6f7b8d;
-  font-size: 10px;
-  line-height: 1;
-}
-.pitch-chip-value {
-  display: block;
-  color: #42ef94;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.25;
-  word-break: break-all;
 }
 </style>

@@ -13,7 +13,7 @@
     </view>
 
     <view class="right-section">
-      <view class="time-info-block">
+      <view class="sidebar-panel time-info-block">
         <view class="time-text-col">
           <text class="current-time">{{ currentTimeWithSeconds }}</text>
           <text class="current-date-cn">{{ chineseDateText }}</text>
@@ -25,13 +25,13 @@
         />
       </view>
       
-      <view class="info-block">
+      <view class="sidebar-panel info-block">
         <text class="title">乐谱详情</text>
         <text class="sub-meta">{{ currentTitle }}</text>
         <text class="page-info">第 {{ pageIndex + 1 }} / {{ totalPages }} 页</text>
       </view>
 
-      <view class="metro-block">
+      <view class="sidebar-panel metro-block">
         <view class="metro-header">
           <text class="metro-title">节拍器</text>
           <text class="metro-status" :class="{ running: enabled }">{{ enabled ? '运行中' : '已停止' }}</text>
@@ -63,25 +63,27 @@
         </button>
       </view>
 
-      <PitchDisplay
-        :result="pitchResult"
-        :socket-status="pitchSocketStatus"
-        :last-msg-at="pitchLastMsgAt"
-        :now="now"
-      />
+      <view class="sidebar-panel pitch-panel">
+        <PitchDisplay
+          :result="pitchResult"
+          :socket-status="pitchSocketStatus"
+          :last-msg-at="pitchLastMsgAt"
+          :now="now"
+        />
+      </view>
 
-      <view class="pitch-session">
+      <view class="sidebar-panel pitch-session">
         <text class="session-caption">手机连接信息</text>
-        <view class="session-chips">
-          <view class="session-chip">
+        <view class="session-rows">
+          <view class="session-row">
             <text class="chip-label">IP</text>
             <text class="chip-value">{{ pitchPhoneHost || '获取中…' }}</text>
           </view>
-          <view class="session-chip">
+          <view class="session-row">
             <text class="chip-label">会话</text>
             <text class="chip-value">{{ pitchSession || '--' }}</text>
           </view>
-          <view class="session-chip chip-port">
+          <view class="session-row">
             <text class="chip-label">端口</text>
             <text class="chip-value">{{ pitchPort }}</text>
           </view>
@@ -114,6 +116,7 @@ import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getLocalSyncedImages } from '@/src/utils/syncImages';
 import { pitchSocket } from '@/src/services/pitchSocket';
+import { disableAndroidTvFocusHighlight } from '@/src/utils/tvFocus';
 import MetronomePanel from '@/components/MetronomePanel.vue';
 import PitchDisplay from '@/components/PitchDisplay.vue';
 
@@ -282,6 +285,8 @@ export default {
     this.startTimeClock();
     this.setScreenAlwaysOn();
     this.connectPitchSocket();
+    disableAndroidTvFocusHighlight();
+    setTimeout(() => disableAndroidTvFocusHighlight(), 120);
   },
   onHide() {
     this.unbindKeys();
@@ -723,26 +728,49 @@ export default {
 }
 
 .left-section {
-  width: 80%;
+  flex: 1;
+  min-width: 0;
   height: 100vh;
-  padding: 14px;
+  padding: 8px;
   display: flex;
+  box-sizing: border-box;
 }
 
+/* 右侧宽度较原先收窄 20%，腾出的横向空间全部给左侧乐谱 */
 .right-section {
-  width: 20%;
+  flex: 0 0 256px;
+  width: 256px;
+  max-width: 256px;
   height: 100vh;
-  padding: 14px 14px 14px 0;
+  padding: 8px 8px 8px 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  gap: 5px;
+  overflow: hidden;
+  box-sizing: border-box;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar-panel {
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pitch-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .score-wrap {
   flex: 1;
+  min-width: 0;
   border-radius: 10px;
   background: #141a23;
-  padding: 12px;
+  padding: 8px;
   display: flex;
 }
 
@@ -783,12 +811,12 @@ export default {
 
 .time-info-block {
   background: linear-gradient(135deg, rgba(20, 26, 35, 0.9), rgba(20, 26, 35, 0.7));
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 8px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   border: 1px solid rgba(185, 174, 230, 0.2);
 }
 
@@ -798,29 +826,29 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .current-time {
-  font-size: 23px;
+  font-size: 17px;
   font-weight: 700;
   color: #f1c64d;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   text-align: left;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .current-date-cn {
-  font-size: 14px;
+  font-size: 10px;
   color: #b8c6dc;
   text-align: left;
   line-height: 1.2;
 }
 
-/* 与时间+日期两行总高度对齐（约 23+14+间距） */
+/* 与时间+日期两行总高度对齐 */
 .time-mascot {
-  width: 52px;
-  height: 52px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
 }
 
@@ -834,39 +862,36 @@ export default {
 
 .info-block {
   background: #141a23;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 30px;
+  border-radius: 8px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .title {
   display: block;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
   color: #f5f7fa;
-  margin-bottom: 4px;
 }
 
 .sub-meta {
   color: #97a3b6;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 9px;
+  line-height: 1.3;
+  word-break: break-all;
 }
 
 .page-info {
   color: #b8c6dc;
-  font-size: 11px;
-  margin-top: 2px;
+  font-size: 9px;
 }
 
 .metro-block {
   background: #141a23;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 30px;
+  border-radius: 8px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
 }
@@ -875,18 +900,18 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .metro-title {
   color: #f5f7fa;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .metro-status {
   color: #97a3b6;
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .metro-status.running {
@@ -895,20 +920,20 @@ export default {
 
 .beat-display {
   background: #0f141c;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
+  border-radius: 6px;
+  padding: 5px 6px;
+  margin-bottom: 4px;
 }
 
 .beat-dots {
   display: flex;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px;
 }
 
 .light {
-  width: 14px;
-  height: 14px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   flex-shrink: 0;
 }
@@ -931,20 +956,20 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
-  margin-top: 6px;
+  padding: 3px 6px;
+  margin-top: 3px;
   background: rgba(45, 52, 66, 0.3);
-  border-radius: 6px;
+  border-radius: 5px;
 }
 
 .info-label {
   color: #97a3b6;
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .info-value {
   color: #f5f7fa;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -965,55 +990,51 @@ export default {
 }
 
 .pitch-session {
-  margin-top: 12px;
-  padding: 10px 12px 12px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
   background: linear-gradient(180deg, rgba(28, 36, 48, 0.95) 0%, rgba(18, 24, 34, 0.92) 100%);
   border: 1px solid rgba(66, 239, 148, 0.12);
 }
 
 .session-caption {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: #7f8a9c;
-  font-size: 10px;
-  letter-spacing: 0.4px;
+  font-size: 9px;
+  letter-spacing: 0.3px;
 }
 
-.session-chips {
+.session-rows {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.session-chip {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 8px 10px;
-  border-radius: 8px;
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
   background: rgba(10, 14, 20, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.session-chip.chip-port {
-  flex: 0 0 auto;
-  min-width: 64px;
+  min-width: 0;
 }
 
 .chip-label {
-  display: block;
-  margin-bottom: 4px;
+  flex: 0 0 28px;
   color: #6f7b8d;
-  font-size: 10px;
-  line-height: 1;
+  font-size: 9px;
+  line-height: 1.3;
 }
 
 .chip-value {
-  display: block;
-  color: #e8eef7;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+  color: #c5ced9;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.3;
   word-break: break-all;
   font-variant-numeric: tabular-nums;
 }

@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def libsDir = file('../app/libs')
+def hasUniSdk = libsDir.exists() && libsDir.listFiles()?.any {
+    def n = it.name.toLowerCase()
+    n.endsWith('.jar') || n.endsWith('.aar')
+}
+
 android {
     namespace 'com.sheetmusic.pitchrelay'
     compileSdk 34
@@ -28,23 +34,47 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+}
 
-    sourceSets {
-        main {
-            def libsDir = file('../app/libs')
-            def hasUniSdk = libsDir.exists() && libsDir.listFiles()?.any {
-                def n = it.name.toLowerCase()
-                n.endsWith('.jar') || n.endsWith('.aar')
-            }
-            if (!hasUniSdk) {
-                java.srcDirs += 'src/stubs/java'
-            }
+// stubs 仅 compileOnly，禁止打进 release AAR（否则云打包/自定义基座会与 dc_weexsdk 类冲突）
+afterEvaluate {
+    def androidJar = file("${android.sdkDirectory}/platforms/android-${android.compileSdk}/android.jar")
+
+    tasks.register('compileUniStubs', JavaCompile) {
+        onlyIf { !hasUniSdk }
+        source = fileTree('src/stubs/java')
+        classpath = files(androidJar)
+        destinationDirectory = file("$buildDir/uni-stubs-classes")
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    tasks.register('uniStubsJar', Jar) {
+        onlyIf { !hasUniSdk }
+        dependsOn compileUniStubs
+        from compileUniStubs.destinationDirectory
+        archiveFileName = 'uni-stubs.jar'
+        destinationDirectory = file("$buildDir/libs")
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        if (name != 'compileUniStubs' && !hasUniSdk) {
+            dependsOn uniStubsJar
+        }
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        if (!hasUniSdk) {
+            dependsOn uniStubsJar
         }
     }
 }
 
 dependencies {
-    compileOnly fileTree(dir: '../app/libs', include: ['*.jar', '*.aar'])
+    if (hasUniSdk) {
+        compileOnly fileTree(dir: '../app/libs', include: ['*.jar', '*.aar'])
+    } else {
+        compileOnly files("$buildDir/libs/uni-stubs.jar")
+    }
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'org.java-websocket:Java-WebSocket:1.5.6'
 }

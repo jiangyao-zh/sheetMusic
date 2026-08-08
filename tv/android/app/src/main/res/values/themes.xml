@@ -3,5 +3,9 @@
     <style name="Theme.TvRelay" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowBackground">#0F1115</item>
+        <!-- 关闭 Android TV 默认焦点黄框（列表 scroll-view 外层） -->
+        <item name="android:defaultFocusHighlightEnabled">false</item>
+        <item name="android:colorFocusedHighlight">@android:color/transparent</item>
+        <item name="colorControlHighlight">@android:color/transparent</item>
     </style>
 </resources>
