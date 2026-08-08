@@ -72,10 +72,10 @@
 
 <script>
 const STALE_MS = 800
-/** 半圆半径（px），适配 TV 详情页右侧栏 256px 宽度 */
-const RADIUS = 62
-const LABEL_RADIUS = 76
-const NEEDLE_RADIUS = 52
+/** 半圆半径（px），适配音准模块高度约 165px（原 248 的 2/3） */
+const RADIUS = 70
+const LABEL_RADIUS = 84
+const NEEDLE_RADIUS = 58
 /** -50～+50 cent 映射到 -80°～+80° */
 const DEG_PER_CENT = 1.6
 /** 推送间隔阈值：更快用跑步，更慢用走路（手机检测约 66ms） */
@@ -267,16 +267,17 @@ export default {
 .pitch-block {
   background: #141a23;
   border-radius: 8px;
-  padding: 8px 8px 10px;
+  /* 底部 padding 更小：高度裁减从底部多余空间开始 */
+  padding: 6px 6px 4px;
   margin-top: 0;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  flex: 1 1 auto;
+  justify-content: flex-start;
+  flex: none;
   min-height: 0;
-  overflow: visible;
+  overflow: hidden;
   border: 1px solid rgba(66, 239, 148, 0.18);
   box-sizing: border-box;
 }
@@ -285,14 +286,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2px;
+  margin-bottom: 0;
   gap: 6px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
 .pitch-title {
   color: #f5f7fa;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -322,17 +324,18 @@ export default {
 .tuner-gauge {
   display: flex;
   justify-content: center;
-  padding: 2px 0 0;
+  align-items: flex-end;
+  padding: 4px 0 0;
   overflow: visible;
   width: 100%;
-  min-height: 66px;
+  flex: 0 0 auto;
 }
 
 /* 舞台宽=2R、高=R，圆环为正圆上半部分 → 与刻度同心 */
 .gauge-stage {
   position: relative;
-  width: 124px;
-  height: 62px;
+  width: 140px;
+  height: 70px;
   overflow: visible;
   margin: 0 auto;
 }
@@ -342,8 +345,8 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 124px;
-  height: 62px;
+  width: 140px;
+  height: 70px;
   overflow: hidden;
 }
 
@@ -351,8 +354,8 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 124px;
-  height: 124px;
+  width: 140px;
+  height: 140px;
   box-sizing: border-box;
   border: 5px solid #242c38;
   border-radius: 50%;
@@ -369,20 +372,20 @@ export default {
 
 .tick-mark {
   width: 1px;
-  height: 6px;
+  height: 7px;
   margin: 0 auto;
   background: #4d5868;
 }
 
 .tick-mark.major {
   width: 2px;
-  height: 9px;
+  height: 10px;
   background: #667386;
 }
 
 .tick-mark.center {
   width: 4px;
-  height: 12px;
+  height: 13px;
   background: #42ef94;
 }
 
@@ -395,7 +398,7 @@ export default {
   width: 24px;
   margin-left: -6px;
   color: #697485;
-  font-size: 8px;
+  font-size: 9px;
   text-align: center;
   line-height: 1;
 }
@@ -421,8 +424,8 @@ export default {
   position: absolute;
   left: 50%;
   bottom: -4px;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border: 2px solid;
   border-radius: 50%;
   background: #141a23;
@@ -435,7 +438,7 @@ export default {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: baseline;
   column-gap: 4px;
-  margin-top: 2px;
+  margin-top: 4px;
   padding: 0 2px;
   min-width: 0;
   flex-shrink: 0;
@@ -450,7 +453,7 @@ export default {
 }
 
 .pitch-note {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
@@ -464,7 +467,7 @@ export default {
 
 .readout-side {
   color: #97a3b6;
-  font-size: 9px;
+  font-size: 10px;
   white-space: nowrap;
 }
 
@@ -473,7 +476,7 @@ export default {
 }
 
 .pitch-footer {
-  margin-top: 4px;
+  margin-top: 3px;
   flex-shrink: 0;
 }
 
@@ -481,13 +484,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 24px;
   min-width: 0;
 }
 
 .activity-sprite {
-  width: 40px;
-  height: 28px;
+  width: 34px;
+  height: 22px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }
@@ -495,7 +498,7 @@ export default {
 .activity-meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
@@ -504,24 +507,14 @@ export default {
   color: #e8eef7;
   font-size: 10px;
   font-weight: 600;
-  line-height: 1.2;
-}
-
-@media screen and (max-height: 720px) {
-  .pitch-block {
-    padding: 6px 7px 8px;
-  }
-
-  .pitch-note {
-    font-size: 28px;
-  }
+  line-height: 1.15;
 }
 
 .activity-hint {
   color: #8b95a7;
   font-size: 9px;
   font-weight: 400;
-  line-height: 1.35;
+  line-height: 1.25;
   word-break: break-word;
 }
 </style>

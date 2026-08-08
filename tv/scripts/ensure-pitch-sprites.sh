@@ -9,6 +9,7 @@ required=(
   "spr_walking.gif"
   "spr_run.gif"
   "xrk.png"
+  "jiepai.png"
 )
 
 missing=0
@@ -26,4 +27,4 @@ if [[ "$missing" -ne 0 ]]; then
   exit 1
 fi
 
-echo "✅ static/gif 资源齐全（挺准动画 + 详情页插图），uni-app 打包时会随 static/ 一并打入 APK。"
+echo "✅ static/gif 资源齐全（挺准动画 + 详情页插图 + 节拍器 jiepai），uni-app 打包时会随 static/ 一并打入 APK。"

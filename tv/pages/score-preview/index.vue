@@ -24,7 +24,7 @@
           mode="aspectFit"
         />
       </view>
-      
+
       <view class="sidebar-panel info-block">
         <text class="title">乐谱详情</text>
         <text class="sub-meta">{{ currentTitle }}</text>
@@ -36,10 +36,22 @@
           <text class="metro-title">节拍器</text>
           <text class="metro-status" :class="{ running: enabled }">{{ enabled ? '运行中' : '已停止' }}</text>
         </view>
-        
+
         <view class="beat-display">
           <view class="beat-dots">
-            <view v-for="n in beatsPerBar" :key="n" class="light" :class="{ active: enabled && currentBeat === n, idle: !enabled || currentBeat !== n }" />
+            <view
+              v-for="n in beatsPerBar"
+              :key="'beat-' + n"
+              class="beat-dot"
+            >
+              <!-- 默认 #244550；当前拍位显示 jiepai.png，尺寸与纯色圆一致 -->
+              <image
+                v-if="enabled && currentBeat === n"
+                class="beat-dot-img"
+                src="/static/gif/jiepai.png"
+                mode="aspectFill"
+              />
+            </view>
           </view>
         </view>
 
@@ -65,6 +77,7 @@
 
       <view class="sidebar-panel pitch-panel">
         <PitchDisplay
+          class="pitch-display-host"
           :result="pitchResult"
           :socket-status="pitchSocketStatus"
           :last-msg-at="pitchLastMsgAt"
@@ -74,15 +87,9 @@
 
       <view class="sidebar-panel pitch-session">
         <view class="session-inline">
-          <view class="session-cell">
-            <text class="chip-label">IP</text>
-            <text class="chip-value">{{ pitchPhoneHost || '获取中…' }}</text>
-          </view>
+          <text class="chip-value">{{ pitchPhoneHost || '获取中…' }}</text>
           <view class="session-divider"></view>
-          <view class="session-cell session-cell-code">
-            <text class="chip-label">会话</text>
-            <text class="chip-value chip-code">{{ pitchSession || '--' }}</text>
-          </view>
+          <text class="chip-value chip-code">{{ pitchSession || '--' }}</text>
         </view>
       </view>
     </view>
@@ -732,17 +739,25 @@ export default {
   box-sizing: border-box;
 }
 
-/* 右侧宽度较原先收窄 20%，腾出的横向空间全部给左侧乐谱 */
+/*
+ * 右侧布局比例（相对上一版）：
+ * - 时间高度 ×1.5
+ * - 节拍器 / 音准各减 1/3
+ * - 省下的高度均分到 4 个模块间距
+ * 参考固定块合计 ≈ 时间48 + 详情56 + 音准248 + 连接34 = 386；旧间距 10×4 + 上下边距 20
+ */
 .right-section {
+  --sidebar-pad-y: 10px;
+  /* 旧节拍器高 ≈ 100vh-446；节省 = 旧节拍器/3 + 248/3，再扣时间增高≈24 后均分到 4 个间距 */
+  --sidebar-gap: max(16px, calc(10px + (100vh - 446px) / 12 + 248px / 12 - 6px));
   flex: 0 0 256px;
   width: 256px;
   max-width: 256px;
   height: 100vh;
-  padding: 10px 8px 10px 0;
+  padding: var(--sidebar-pad-y) 8px var(--sidebar-pad-y) 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: flex-start;
   overflow: hidden;
   box-sizing: border-box;
   outline: none !important;
@@ -757,12 +772,39 @@ export default {
   box-sizing: border-box;
 }
 
-.pitch-panel {
+/* 真机 WebView 可能不支持 flex gap，用相邻外边距保证间距统一 */
+.sidebar-panel + .sidebar-panel {
+  margin-top: var(--sidebar-gap);
+}
+
+/* 节拍器吸收剩余高度（约为原先的 2/3，因间距与时间已占走节省空间） */
+.metro-block {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
+}
+
+/* 音准：高度减为原先 248 的 2/3，从底部多余空间裁掉 */
+.pitch-panel {
+  width: 100%;
+  height: 165px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.pitch-display-host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pitch-panel /deep/ .pitch-block {
+  width: 100%;
+  height: 100%;
 }
 
 .score-wrap {
@@ -809,15 +851,18 @@ export default {
   font-size: 9px;
 }
 
+/* 时间模块：高度约为原先的 1.5 倍 */
 .time-info-block {
   background: linear-gradient(135deg, rgba(20, 26, 35, 0.9), rgba(20, 26, 35, 0.7));
   border-radius: 8px;
-  padding: 6px 8px;
+  min-height: 72px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 1px solid rgba(185, 174, 230, 0.2);
+  box-sizing: border-box;
 }
 
 .time-text-col {
@@ -826,11 +871,11 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 .current-time {
-  font-size: 17px;
+  font-size: 24px;
   font-weight: 700;
   color: #f1c64d;
   letter-spacing: 0.5px;
@@ -839,16 +884,15 @@ export default {
 }
 
 .current-date-cn {
-  font-size: 10px;
+  font-size: 13px;
   color: #b8c6dc;
   text-align: left;
   line-height: 1.2;
 }
 
-/* 与时间+日期两行总高度对齐 */
 .time-mascot {
-  width: 34px;
-  height: 34px;
+  width: 50px;
+  height: 50px;
   flex-shrink: 0;
 }
 
@@ -888,10 +932,11 @@ export default {
   font-size: 9px;
 }
 
+/* 节拍器内部约按 2/3 比例收紧 */
 .metro-block {
   background: #141a23;
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 5px 7px;
   display: flex;
   flex-direction: column;
 }
@@ -900,7 +945,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
+  flex-shrink: 0;
 }
 
 .metro-title {
@@ -921,55 +967,74 @@ export default {
 .beat-display {
   background: #0f141c;
   border-radius: 6px;
-  padding: 5px 6px;
-  margin-bottom: 4px;
-}
-
-.beat-dots {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.light {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
+  padding: 6px 8px;
+  margin-bottom: 5px;
   flex-shrink: 0;
 }
 
-.light.idle {
-  background: #243140;
+/* 点数 = 拍号分子；当前拍显示 jiepai.png，其余默认 #244550 */
+.beat-dots {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.light.active {
-  background: #42ef94;
-  box-shadow: 0 0 10px rgba(66, 239, 148, 0.9);
+.beat-dot {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-width: 28px;
+  max-height: 28px;
+  border-radius: 50%;
+  background: #244550;
+  overflow: hidden;
+  flex: 0 0 28px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.beat-dot-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  display: block;
+  border-radius: 50%;
 }
 
 .metro-info {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 6px;
-  margin-top: 3px;
+  flex: 1 1 0;
+  min-height: 18px;
+  max-height: 36px;
+  padding: 2px 7px;
   background: rgba(45, 52, 66, 0.3);
   border-radius: 5px;
 }
 
+.info-row + .info-row {
+  margin-top: 5px;
+}
+
 .info-label {
   color: #97a3b6;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .info-value {
   color: #f5f7fa;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1001,7 +1066,7 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0;
+  justify-content: space-between;
   min-width: 0;
   padding: 7px 8px;
   border-radius: 8px;
@@ -1009,38 +1074,19 @@ export default {
   border: 1px solid rgba(66, 239, 148, 0.12);
 }
 
-.session-cell {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.session-cell-code {
-  flex: 0 0 auto;
-}
-
 .session-divider {
   width: 1px;
   height: 12px;
-  margin: 0 6px;
+  margin: 0 8px;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.12);
 }
 
-.chip-label {
-  flex: 0 0 auto;
-  color: #6f7b8d;
-  font-size: 9px;
-  line-height: 1.2;
-}
-
 .chip-value {
   min-width: 0;
+  flex: 1 1 auto;
   color: #c5ced9;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
@@ -1050,22 +1096,21 @@ export default {
 }
 
 .chip-code {
+  flex: 0 0 auto;
   color: #42ef94;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.5px;
+  text-align: right;
 }
 
-/* 低逻辑高度（模拟器/部分 TV）：保持可读间距，略减内边距避免溢出 */
 @media screen and (max-height: 720px) {
   .right-section {
-    gap: 8px;
-    padding: 8px 6px 8px 0;
+    --sidebar-pad-y: 8px;
+    padding: var(--sidebar-pad-y) 6px var(--sidebar-pad-y) 0;
   }
 
-  .time-info-block,
-  .info-block,
-  .metro-block {
+  .info-block {
     padding: 5px 7px;
   }
 
@@ -1074,11 +1119,7 @@ export default {
   }
 
   .chip-code {
-    font-size: 11px;
-  }
-
-  .current-time {
-    font-size: 15px;
+    font-size: 12px;
   }
 }
 </style>
