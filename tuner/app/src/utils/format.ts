@@ -25,7 +25,7 @@ export function statusLabel(result: PitchResult): string {
     case 'no_signal':
       return '未检测到声音'
     case 'too_low':
-      return '置信度偏低'
+      return '信号偏弱'
     case 'valid': {
       const abs = Math.abs(result.cent)
       if (abs <= 5) return '非常准确'

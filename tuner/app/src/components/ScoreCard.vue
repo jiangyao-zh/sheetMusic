@@ -17,23 +17,15 @@
     </view>
 
     <view class="row">
-      <text class="label">评分</text>
-      <text class="value score">{{ formatScore(result.score, result.status) }}</text>
-    </view>
-    <view class="row">
       <text class="label">状态</text>
       <text class="value" :style="{ color }">{{ statusText }}</text>
-    </view>
-    <view v-if="result.status === 'valid'" class="meta">
-      <text>置信度 {{ (result.confidence * 100).toFixed(0) }}%</text>
-      <text>MIDI {{ result.midi.toFixed(1) }}</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import type { PitchResult } from '@/types/pitch'
-import { formatCent, formatFrequency, formatScore } from '@/utils/format'
+import { formatCent, formatFrequency } from '@/utils/format'
 
 defineProps<{
   result: PitchResult
@@ -113,15 +105,5 @@ defineProps<{
   color: #f3f5f7;
   font-size: 34rpx;
   font-weight: 600;
-}
-.score {
-  font-size: 48rpx;
-}
-.meta {
-  margin-top: 12rpx;
-  display: flex;
-  justify-content: space-between;
-  color: #6b7280;
-  font-size: 22rpx;
 }
 </style>

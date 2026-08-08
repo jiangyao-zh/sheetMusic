@@ -2,7 +2,7 @@
   <view class="page">
     <view class="hero">
       <text class="title">小提琴音准检测</text>
-      <text class="subtitle">单音 · YIN · 实时评分 · TV 同步</text>
+      <text class="subtitle">单音 · YIN · TV 同步</text>
     </view>
 
     <ScoreCard :result="result" :color="color" :status-text="label" />
@@ -45,16 +45,7 @@
           class="field-input"
           type="text"
           v-model="tvSession"
-          placeholder="与 TV 一致"
-          @blur="store.saveCastConfig()"
-        />
-      </view>
-      <view class="field">
-        <text class="field-label">端口</text>
-        <input
-          class="field-input"
-          type="number"
-          v-model.number="tvPort"
+          placeholder="与 TV 一致的 4 位数字"
           @blur="store.saveCastConfig()"
         />
       </view>
@@ -76,7 +67,7 @@
     </view>
 
     <text class="hint">
-      音准在手机端算完后，经 WebSocket 只推送 note/frequency/cent/score；不传 PCM。
+      音准在手机端算完后，经 WebSocket 推送 note/frequency/cent；不传 PCM。端口默认 9091。
     </text>
   </view>
 </template>
@@ -99,7 +90,6 @@ const {
   color,
   tvHost,
   tvSession,
-  tvPort,
   socketStatus,
   socketDetail,
   socketLabel,
