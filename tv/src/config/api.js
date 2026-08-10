@@ -15,7 +15,7 @@ export const API_HOST = ENV_CONFIG.TV_API_HOST;
  * @returns {string} API 基础地址
  */
 export function getApiHost() {
-  return API_HOST;
+  return API_HOST.replace(/\/+$/, '');
 }
 
 /**

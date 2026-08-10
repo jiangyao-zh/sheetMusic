@@ -1,5 +1,13 @@
 /** 与原生插件回调保持一致的音高检测结果 */
-export type PitchStatus = 'idle' | 'detecting' | 'valid' | 'too_low' | 'no_signal'
+export type PitchStatus =
+  | 'idle'
+  | 'detecting'
+  | 'valid'
+  | 'too_low'
+  | 'no_signal'
+  | 'metronome_suppressed'
+  | 'voice_rejected'
+  | 'stabilizing'
 
 export interface PitchResult {
   frequency: number
@@ -9,6 +17,8 @@ export interface PitchResult {
   cent: number
   score: number
   status: PitchStatus
+  /** 乐器可能性 0–1，可选 */
+  instrumentScore?: number
 }
 
 export interface PitchStartOptions {

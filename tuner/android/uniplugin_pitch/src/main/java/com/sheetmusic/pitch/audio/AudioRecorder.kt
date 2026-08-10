@@ -98,14 +98,15 @@ class AudioRecorder(
     }
 
     private fun createRecorder(recordBuf: Int): AudioRecord? {
+        // 乐器收音优先原始/通用麦克风，避免 VOICE_* 的语音增强 DSP 损伤谐波
         val sources = buildList {
-            add(MediaRecorder.AudioSource.VOICE_RECOGNITION to "VOICE_RECOGNITION")
-            add(MediaRecorder.AudioSource.MIC to "MIC")
-            add(MediaRecorder.AudioSource.CAMCORDER to "CAMCORDER")
-            add(MediaRecorder.AudioSource.VOICE_COMMUNICATION to "VOICE_COMMUNICATION")
             if (Build.VERSION.SDK_INT >= 24) {
                 add(MediaRecorder.AudioSource.UNPROCESSED to "UNPROCESSED")
             }
+            add(MediaRecorder.AudioSource.MIC to "MIC")
+            add(MediaRecorder.AudioSource.CAMCORDER to "CAMCORDER")
+            add(MediaRecorder.AudioSource.VOICE_RECOGNITION to "VOICE_RECOGNITION")
+            add(MediaRecorder.AudioSource.VOICE_COMMUNICATION to "VOICE_COMMUNICATION")
         }
         for ((source, name) in sources) {
             try {

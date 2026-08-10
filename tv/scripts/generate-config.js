@@ -55,7 +55,7 @@ function generateConfig() {
   console.log(`读取配置: ${envPath}`);
 
   const config = {
-    TV_API_HOST: env.TV_API_HOST || '',
+    TV_API_HOST: (env.TV_API_HOST || '').replace(/\/+$/, ''),
   };
 
   if (!config.TV_API_HOST) {

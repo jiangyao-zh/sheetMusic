@@ -4,6 +4,7 @@ import type {
   PitchResultCallback,
   PitchStartOptions,
 } from '@/types/pitch'
+import type { MetronomeBeatEvent } from '@/services/PitchSocketService'
 
 interface NativePitchPlugin {
   start: (
@@ -12,6 +13,7 @@ interface NativePitchPlugin {
   ) => void
   stop: () => void
   setTargetNote: (note: string | null) => void
+  notifyMetronomeBeat?: (options: { ts?: number; suppressMs?: number }) => void
 }
 
 function requestMicPermission(): Promise<boolean> {
@@ -88,6 +90,17 @@ export class NativePitchProvider implements PitchProvider {
       this.getPlugin().setTargetNote(note)
     } catch {
       // H5 / 未加载插件时忽略
+    }
+  }
+
+  notifyMetronomeBeat(beat: MetronomeBeatEvent): void {
+    try {
+      this.getPlugin().notifyMetronomeBeat?.({
+        ts: beat.ts,
+        suppressMs: beat.suppressMs,
+      })
+    } catch {
+      // ignore
     }
   }
 }

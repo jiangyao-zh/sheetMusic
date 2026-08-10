@@ -7,21 +7,32 @@
 
 const SAMPLE_RATE = 44100
 const THRESHOLD = 0.1
-const MIN_F = 196
-const MAX_F = 2637
+const MIN_F = 190
+const MAX_F = 2700
 
-function synthesize(frequency, { harmonics = false, n = 4096, noise = 0.01 } = {}) {
+function synthesize(frequency, { harmonics = false, n = 4096, noise = 0.01, weakFundamental = false } = {}) {
   const out = new Float64Array(n)
   for (let i = 0; i < n; i++) {
     const t = i / SAMPLE_RATE
     let v = Math.sin(2 * Math.PI * frequency * t)
     if (harmonics) {
+      const fundScale = weakFundamental ? 0.18 : 1.0
+      v = fundScale * v
       v += 0.45 * Math.sin(2 * Math.PI * frequency * 2 * t)
       v += 0.25 * Math.sin(2 * Math.PI * frequency * 3 * t)
       v += 0.12 * Math.sin(2 * Math.PI * frequency * 4 * t)
     }
-    v += (Math.random() * 2 - 1) * noise
+    v += Math.sin(i * 0.013 + frequency) * noise
     out[i] = v * 0.35
+  }
+  return out
+}
+
+function synthesizeClick(freq = 1500, n = 4096) {
+  const out = new Float64Array(n)
+  for (let i = 0; i < Math.min(200, n); i++) {
+    const t = i / SAMPLE_RATE
+    out[i] = 0.5 * Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 120)
   }
   return out
 }
@@ -33,21 +44,68 @@ function removeDc(samples) {
   return samples.map((s) => s - mean)
 }
 
-function normalize(samples) {
-  let peak = 0
-  for (const s of samples) peak = Math.max(peak, Math.abs(s))
-  if (peak < 1e-8) return samples.slice()
-  return samples.map((s) => s / peak)
+function projectCos(samples, omega) {
+  let re = 0
+  let im = 0
+  for (let i = 0; i < samples.length; i++) {
+    re += samples[i] * Math.cos(omega * i)
+    im += samples[i] * Math.sin(omega * i)
+  }
+  return Math.sqrt(re * re + im * im) / samples.length
 }
 
-function hanning(samples) {
-  const n = samples.length
-  const denom = n - 1
-  return samples.map((s, i) => s * (0.5 * (1 - Math.cos((2 * Math.PI * i) / denom))))
+function isSecondHarmonicLock(samples, candidateF, detectedF) {
+  if (Math.abs(detectedF / candidateF - 2) > 0.04) return false
+  const omega = (2 * Math.PI * candidateF) / SAMPLE_RATE
+  const e1 = projectCos(samples, omega)
+  const e2 = projectCos(samples, omega * 2)
+  if (e1 < 1e-5) return false
+  return e2 * e2 > e1 * e1 * 2.5 && e1 > e2 * 0.12
 }
 
-function yinDetect(raw) {
-  // 与 Kotlin PitchAnalyzer 一致：YIN 前仅去直流
+function fundamentalLikelihood(samples, f) {
+  const omega = (2 * Math.PI * f) / SAMPLE_RATE
+  const e1 = projectCos(samples, omega) ** 2
+  if (e1 < 1e-10) return 0
+  const e2 = projectCos(samples, omega * 2) ** 2
+  const e3 = projectCos(samples, omega * 3) ** 2
+  const e4 = projectCos(samples, omega * 4) ** 2
+  const r2 = e2 / e1
+  const r3 = e3 / e1
+  const r4 = e4 / e1
+  const err = Math.abs(r2 - 0.45) + Math.abs(r3 - 0.25) + Math.abs(r4 - 0.12)
+  let s = 1 / (1 + err)
+  s *= 1 + Math.log(1 + e1 * 1000)
+  if (r2 > 2) s *= 0.35
+  return s
+}
+
+function pickBestCandidate(samples, rawF, rawConf, prevF = null) {
+  const half = rawF * 0.5
+  if (half >= MIN_F && half <= MAX_F && isSecondHarmonicLock(samples, half, rawF)) {
+    return { frequency: half, confidence: Math.min(1, rawConf * 0.65 + 0.35) }
+  }
+  const candidates = [...new Set([rawF, rawF * 0.5])].filter((f) => f >= MIN_F && f <= MAX_F)
+  let bestF = rawF
+  let bestScore = fundamentalLikelihood(samples, rawF)
+  for (const f of candidates) {
+    if (f >= rawF) continue
+    if (!isSecondHarmonicLock(samples, f, rawF)) continue
+    const s = fundamentalLikelihood(samples, f)
+    if (s > bestScore * 1.02) {
+      bestScore = s
+      bestF = f
+    }
+  }
+  if (prevF && prevF > 0) {
+    const centsDiff = Math.abs((1200 * Math.log(bestF / prevF)) / Math.LN2)
+    if (centsDiff < 35) bestScore += 0.15
+  }
+  const conf = Math.max(0, Math.min(1, rawConf * 0.55 + (bestScore / (bestScore + 1)) * 0.45))
+  return { frequency: bestF, confidence: conf }
+}
+
+function yinDetect(raw, prevF = null) {
   const samples = removeDc(Array.from(raw))
   const n = samples.length
   const tauMin = Math.max(2, Math.floor(SAMPLE_RATE / MAX_F))
@@ -87,7 +145,7 @@ function yinDetect(raw) {
         best = t
       }
     }
-    if (bestVal >= 0.3) return null
+    if (bestVal >= 0.32) return null
     tauEst = best
   }
 
@@ -98,9 +156,9 @@ function yinDetect(raw) {
   const delta = Math.abs(denom) < 1e-12 ? 0 : (0.5 * (s0 - s2)) / denom
   const tau0 = tauEst + delta
   const tau = refineFractionalTau(samples, tau0)
-  const frequency = SAMPLE_RATE / tau
-  const confidence = Math.max(0, Math.min(1, 1 - cmnd[tauEst]))
-  return { frequency, confidence }
+  const rawF = SAMPLE_RATE / tau
+  const rawConf = Math.max(0, Math.min(1, 1 - cmnd[tauEst]))
+  return pickBestCandidate(samples, rawF, rawConf, prevF)
 }
 
 function fractionalDifference(samples, tau) {
@@ -148,7 +206,7 @@ function scoreFromCent(cent) {
   return Math.max(0, 60 - (abs - 50) / 2)
 }
 
-const freqs = [196.0, 293.66, 440.0, 659.25, 987.77, 1318.5, 2093.0]
+const freqs = [196.0, 293.66, 392.0, 440.0, 659.25, 987.77, 1318.5, 2093.0]
 let failed = 0
 
 console.log('YIN 精度验证（合成正弦波，目标 < 1 cent）\n')
@@ -167,10 +225,22 @@ for (const f of freqs) {
   )
 }
 
+// G4 弱基频 + 强二次谐波
+const g4weak = yinDetect(synthesize(392, { harmonics: true, weakFundamental: true, noise: 0.01 }))
+const g4c = g4weak ? cents(g4weak.frequency, 392) : Infinity
+console.log(`\nG4 弱基频: ${g4weak ? `${g4weak.frequency.toFixed(3)} Hz / ${g4c.toFixed(3)} cent` : 'null'}`)
+if (!g4weak || g4c >= 2.5) failed++
+
 const harmonic = yinDetect(synthesize(440, { harmonics: true, noise: 0.01 }))
 const hc = harmonic ? cents(harmonic.frequency, 440) : Infinity
-console.log(`\n谐波 A4: ${harmonic ? `${harmonic.frequency.toFixed(3)} Hz / ${hc.toFixed(3)} cent` : 'null'}`)
+console.log(`谐波 A4: ${harmonic ? `${harmonic.frequency.toFixed(3)} Hz / ${hc.toFixed(3)} cent` : 'null'}`)
 if (hc >= 2) failed++
+
+// 节拍点击不应稳定锁到 800/1500
+const click = yinDetect(synthesizeClick(1500))
+if (click && click.confidence > 0.75) {
+  console.log(`WARN  点击帧 conf=${click.confidence.toFixed(3)}（应由瞬态门控过滤）`)
+}
 
 const eval442 = scoreFromCent((1200 * Math.log(442 / 440)) / Math.LN2)
 console.log(`评分 442vs440: ${eval442} (期望 95)`)

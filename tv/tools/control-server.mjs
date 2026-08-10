@@ -87,6 +87,19 @@ function broadcastPitch(session, payload, except) {
   return n
 }
 
+/** TV 发布节拍事件 → 转发给同 session 的 phone */
+function broadcastBeat(session, payload, except) {
+  const room = pitchRooms.get(session)
+  if (!room) return 0
+  let n = 0
+  for (const client of room) {
+    if (client === except) continue
+    if (client.role !== 'phone') continue
+    if (safeSend(client, payload)) n += 1
+  }
+  return n
+}
+
 const server = http.createServer((req, res) => {
   cors(res)
   if (req.method === 'OPTIONS') {
@@ -222,6 +235,25 @@ wss.on('connection', (ws, _req, url) => {
         peers: room.size,
         ts: Date.now(),
       })
+      return
+    }
+
+    // TV 发布节拍同步 → 转发给 phone
+    if (msg?.type === 'beat') {
+      if (role !== 'tv') {
+        safeSend(ws, { type: 'error', error: 'only tv can publish beat' })
+        return
+      }
+      const envelope = {
+        type: 'beat',
+        session,
+        ts: Number(msg.ts) || Date.now(),
+        bpm: Number(msg.bpm) || 0,
+        beatIndex: Number(msg.beatIndex) || 0,
+        beatsPerBar: Number(msg.beatsPerBar) || 4,
+        suppressMs: Number(msg.suppressMs) || 120,
+      }
+      broadcastBeat(session, envelope, ws)
       return
     }
 

@@ -12,17 +12,24 @@ export interface PitchSocketConfig {
   a4?: number
 }
 
-type StatusListener = (status: PitchSocketStatus, detail?: string) => void
+export interface MetronomeBeatEvent {
+  ts: number
+  bpm: number
+  beatIndex: number
+  beatsPerBar: number
+  suppressMs: number
+}
+
+type StatusListener = (status: PitchSocketStatus) => void
+type BeatListener = (beat: MetronomeBeatEvent) => void
 
 /**
  * 手机端 WebSocket 发布者：只发送 PitchResult JSON，不传 PCM。
- * 发送策略：只保留最新一帧，避免背压堆积。
+ * 同时接收 TV 节拍 beat 事件用于短时分析门控。
  */
 class PitchSocketServiceImpl {
-  // uni.connectSocket 返回 SocketTask；用宽松类型避免跨端类型差异
   private socket: { send: Function; close: Function; onOpen: Function; onMessage: Function; onError: Function; onClose: Function } | null = null
   private status: PitchSocketStatus = 'idle'
-  private detail = ''
   private config: PitchSocketConfig | null = null
   private seq = 0
   private pending: PitchResult | null = null
@@ -31,15 +38,26 @@ class PitchSocketServiceImpl {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private manualClose = false
   private listeners = new Set<StatusListener>()
+  private beatListeners = new Set<BeatListener>()
+  private beatGateUntil = 0
 
   onStatus(listener: StatusListener) {
     this.listeners.add(listener)
-    listener(this.status, this.detail)
+    listener(this.status)
     return () => this.listeners.delete(listener)
   }
 
+  onBeat(listener: BeatListener) {
+    this.beatListeners.add(listener)
+    return () => this.beatListeners.delete(listener)
+  }
+
+  isBeatGateActive(): boolean {
+    return Date.now() < this.beatGateUntil
+  }
+
   getStatus() {
-    return { status: this.status, detail: this.detail, config: this.config }
+    return { status: this.status, config: this.config }
   }
 
   connect(config: PitchSocketConfig) {
@@ -57,22 +75,25 @@ class PitchSocketServiceImpl {
     this.manualClose = true
     this.clearTimers()
     this.pending = null
+    this.beatGateUntil = 0
     try {
       this.socket?.close({})
     } catch {
       // ignore
     }
     this.socket = null
-    this.setStatus('idle', '已断开')
+    this.setStatus('idle')
   }
 
   setA4(a4: number) {
     if (this.config) this.config.a4 = a4
   }
 
-  /** 检测回调中调用：只缓存最新结果并尽快发送 */
+  /** 检测回调中调用：节拍门控期间不发布 */
   publish(result: PitchResult) {
     if (!this.config || this.status !== 'connected') return
+    if (this.isBeatGateActive()) return
+    if (result.status === 'metronome_suppressed') return
     this.pending = result
     this.flush()
   }
@@ -87,8 +108,7 @@ class PitchSocketServiceImpl {
     }
 
     const { host, port = 9091, session } = this.config
-    const url = `ws://${host}:${port}/ws/pitch?session=${encodeURIComponent(session)}&role=phone`
-    this.setStatus('connecting', url)
+    this.setStatus('connecting')
 
     const task = uni.connectSocket({
       url,
@@ -97,17 +117,34 @@ class PitchSocketServiceImpl {
     this.socket = task
 
     task.onOpen(() => {
-      this.setStatus('connected', `已连接 ${host}:${port}`)
+      this.setStatus('connected')
       this.startHeartbeat()
       this.flush()
     })
 
-    task.onMessage(() => {
-      // ready/pong/ack 暂不处理 UI，保留扩展点
+    task.onMessage((res) => {
+      let msg: Record<string, unknown> | null = null
+      try {
+        msg = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+      } catch {
+        return
+      }
+      if (!msg?.type) return
+      if (msg.type === 'beat') {
+        const beat: MetronomeBeatEvent = {
+          ts: Number(msg.ts) || Date.now(),
+          bpm: Number(msg.bpm) || 0,
+          beatIndex: Number(msg.beatIndex) || 0,
+          beatsPerBar: Number(msg.beatsPerBar) || 4,
+          suppressMs: Number(msg.suppressMs) || 120,
+        }
+        this.beatGateUntil = Math.max(this.beatGateUntil, beat.ts + beat.suppressMs)
+        this.beatListeners.forEach((fn) => fn(beat))
+      }
     })
 
     task.onError((err) => {
-      this.setStatus('error', (err && (err as { errMsg?: string }).errMsg) || '连接失败')
+      this.setStatus('error')
       this.scheduleReconnect()
     })
 
@@ -115,10 +152,10 @@ class PitchSocketServiceImpl {
       this.socket = null
       this.stopHeartbeat()
       if (!this.manualClose) {
-        this.setStatus('error', '连接断开，重连中…')
+        this.setStatus('error')
         this.scheduleReconnect()
       } else {
-        this.setStatus('idle', '已断开')
+        this.setStatus('idle')
       }
     })
   }
@@ -126,6 +163,7 @@ class PitchSocketServiceImpl {
   private flush() {
     if (!this.socket || this.status !== 'connected' || !this.config) return
     if (this.sending || !this.pending) return
+    if (this.isBeatGateActive()) return
 
     const result = this.pending
     this.pending = null
@@ -144,7 +182,6 @@ class PitchSocketServiceImpl {
       data: payload,
       complete: () => {
         this.sending = false
-        // 发送期间又来了更新：立刻再发最新帧
         if (this.pending) this.flush()
       },
     })
@@ -185,10 +222,9 @@ class PitchSocketServiceImpl {
     }
   }
 
-  private setStatus(status: PitchSocketStatus, detail = '') {
+  private setStatus(status: PitchSocketStatus) {
     this.status = status
-    this.detail = detail
-    this.listeners.forEach((fn) => fn(status, detail))
+    this.listeners.forEach((fn) => fn(status))
   }
 }
 

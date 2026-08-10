@@ -160,11 +160,13 @@ export default {
       if (this.socketStatus === 'connecting') return '连接中'
       if (this.socketStatus === 'error') return '未连接'
       if (this.socketStatus === 'idle') return '未连接'
+      if (this.socketStatus === 'connected' && !this.lastMsgAt) return '等待推送'
       if (this.stale) return '信号中断'
       return '已连接'
     },
     active() {
-      return this.socketStatus === 'connected' && !this.stale && this.result
+      return this.socketStatus === 'connected' && !this.stale && this.result &&
+        (this.result.status === 'valid' || this.result.status === 'stabilizing')
     },
     ticks() {
       return Array.from({ length: 21 }, (_, i) => -50 + i * 5)
@@ -193,7 +195,8 @@ export default {
       return match ? match[1] : ''
     },
     needleCent() {
-      if (!this.active || this.result.status !== 'valid') return 0
+      if (!this.active) return 0
+      if (this.result.status !== 'valid' && this.result.status !== 'stabilizing') return 0
       return Math.max(-50, Math.min(50, Number(this.result.cent) || 0))
     },
     freqText() {
@@ -215,7 +218,8 @@ export default {
       if (this.stale || !this.result) return 'stand'
       const status = this.result.status
       if (status === 'no_signal' || status === 'idle') return 'stand'
-      if (status === 'too_low') return 'walk'
+      if (status === 'metronome_suppressed' || status === 'voice_rejected') return 'walk'
+      if (status === 'too_low' || status === 'stabilizing') return 'walk'
       if (status === 'valid') {
         if (this.avgInterval <= RUN_INTERVAL_MS) return 'run'
         if (this.avgInterval <= WALK_INTERVAL_MS) return 'walk'
@@ -234,7 +238,11 @@ export default {
     activityHint() {
       if (this.socketStatus !== 'connected') return '请在手机填写 TV IP 与会话'
       if (this.stale) return '超过 0.8s 未收到数据'
-      if (!this.result || this.result.status === 'no_signal' || this.result.status === 'idle') {
+      if (!this.result) return '未检测到声音'
+      if (this.result.status === 'metronome_suppressed') return '过滤节拍器干扰'
+      if (this.result.status === 'voice_rejected') return '过滤环境人声'
+      if (this.result.status === 'stabilizing') return '保持上一有效音高'
+      if (this.result.status === 'no_signal' || this.result.status === 'idle') {
         return '未检测到声音'
       }
       if (this.result.status === 'too_low') return '信号偏弱'
@@ -243,9 +251,11 @@ export default {
       return hz ? `信号强度 ${n} · ${hz}` : `信号强度 ${n}`
     },
     accent() {
-      if (!this.active || this.result.status !== 'valid') return '#b8c6dc'
+      if (!this.result) return '#8b93a7'
+      if (this.result.status === 'stabilizing') return '#8b93a7'
+      if (this.result.status !== 'valid') return '#8b93a7'
       const abs = Math.abs(Number(this.result.cent) || 0)
-      if (abs <= 5) return '#42ef94'
+      if (abs <= 5) return '#3dd68c'
       if (abs <= 15) return '#7ee787'
       if (abs <= 30) return '#e3b341'
       return '#ff7b72'
@@ -310,7 +320,7 @@ export default {
 }
 
 .pitch-link.ok {
-  color: #42ef94;
+  color: #3dd68c;
 }
 
 .pitch-link.warn {
@@ -386,7 +396,7 @@ export default {
 .tick-mark.center {
   width: 4px;
   height: 13px;
-  background: #42ef94;
+  background: #3dd68c;
 }
 
 .label-arm {
@@ -483,14 +493,14 @@ export default {
 .activity-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 24px;
+  gap: 8px;
+  min-height: 48px;
   min-width: 0;
 }
 
 .activity-sprite {
-  width: 34px;
-  height: 22px;
+  width: 68px;
+  height: 44px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }

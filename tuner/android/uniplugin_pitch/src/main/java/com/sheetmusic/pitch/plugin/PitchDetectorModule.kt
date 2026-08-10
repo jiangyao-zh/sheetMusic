@@ -103,12 +103,21 @@ class PitchDetectorModule : UniModule() {
         analyzer?.targetNote = value
     }
 
+    /** TV 节拍同步：在 suppressMs 内暂停音高分析 */
+    @UniJSMethod(uiThread = false)
+    fun notifyMetronomeBeat(options: Map<String, Any>?) {
+        val ts = (options?.get("ts") as? Number)?.toLong() ?: System.currentTimeMillis()
+        val suppressMs = (options?.get("suppressMs") as? Number)?.toLong() ?: 120L
+        analyzer?.notifyMetronomeBeat(ts, suppressMs)
+    }
+
     private fun stopInternal() {
         try {
             recorder?.stop()
         } catch (_: Exception) {
         }
         recorder = null
+        analyzer?.reset()
         analyzeHandler?.removeCallbacksAndMessages(null)
         analyzeThread?.quitSafely()
         analyzeHandler = null

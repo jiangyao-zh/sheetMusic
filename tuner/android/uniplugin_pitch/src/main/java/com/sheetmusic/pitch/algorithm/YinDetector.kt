@@ -5,16 +5,20 @@ import kotlin.math.min
 
 /**
  * YIN 基频检测（小提琴单音）。
- * 流程：Difference → CMND → Absolute Threshold → Parabolic Interpolation。
+ * 流程：Difference → CMND → Absolute Threshold → Parabolic Interpolation → 谐波候选修正。
  */
 class YinDetector(
     private val sampleRate: Int = 44100,
     private val threshold: Double = 0.1,
-    /** 小提琴有效音域 G3–E7 */
-    private val minFrequency: Double = 196.0,
-    private val maxFrequency: Double = 2637.0,
+    /** 小提琴有效音域 G3–E7（略放宽下界便于 G4 边缘） */
+    private val minFrequency: Double = 190.0,
+    private val maxFrequency: Double = 2700.0,
 ) {
     data class Result(val frequency: Double, val confidence: Double)
+
+    /** 上一帧频率，供谐波候选连续性加权（由 PitchAnalyzer 设置）。 */
+    @Volatile
+    var previousFrequency: Double? = null
 
     fun detect(samples: FloatArray): Result? {
         val n = samples.size
@@ -29,20 +33,25 @@ class YinDetector(
 
         val tauEstimate = absoluteThreshold(cmnd, tauMin, tauMax) ?: return null
         val tauParabola = parabolicInterpolation(cmnd, tauEstimate)
-        // 高音区周期样本少，再对分数 tau 做局部搜索细化
         val tauRefined = refineFractionalTau(samples, tauParabola)
         if (tauRefined <= 0.0) return null
 
-        val frequency = sampleRate / tauRefined
-        if (frequency < minFrequency || frequency > maxFrequency) return null
+        val rawFrequency = sampleRate / tauRefined
+        if (rawFrequency < minFrequency || rawFrequency > maxFrequency) return null
 
-        val conf = (1.0 - cmnd[tauEstimate]).coerceIn(0.0, 1.0)
-        return Result(frequency = frequency, confidence = conf)
+        val rawConf = (1.0 - cmnd[tauEstimate]).coerceIn(0.0, 1.0)
+        val (frequency, confidence) = HarmonicScorer.pickBestCandidate(
+            samples = samples,
+            sampleRate = sampleRate,
+            rawFrequency = rawFrequency,
+            rawConfidence = rawConf,
+            minFrequency = minFrequency,
+            maxFrequency = maxFrequency,
+            previousFrequency = previousFrequency,
+        )
+        return Result(frequency = frequency, confidence = confidence)
     }
 
-    /**
-     * 在 [tau-0.75, tau+0.75] 内以 0.01 步长搜索分数时延，提升短周期精度。
-     */
     private fun refineFractionalTau(samples: FloatArray, tau: Double): Double {
         if (tau < 2.0) return tau
         var bestTau = tau
@@ -110,7 +119,6 @@ class YinDetector(
             }
             tau++
         }
-        // 回退：取范围内全局最小
         var best = tauMin
         var bestVal = cmnd[tauMin]
         for (t in tauMin + 1..tauMax) {
@@ -119,7 +127,7 @@ class YinDetector(
                 best = t
             }
         }
-        return if (bestVal < 0.3) best else null
+        return if (bestVal < 0.32) best else null
     }
 
     private fun parabolicInterpolation(cmnd: DoubleArray, tau: Int): Double {
@@ -127,7 +135,6 @@ class YinDetector(
         val s0 = cmnd[tau - 1]
         val s1 = cmnd[tau]
         val s2 = cmnd[tau + 1]
-        // x = 0.5 * (y[-1] - y[1]) / (y[-1] - 2y[0] + y[1])
         val denom = s0 - 2.0 * s1 + s2
         if (kotlin.math.abs(denom) < 1e-12) return tau.toDouble()
         val delta = 0.5 * (s0 - s2) / denom

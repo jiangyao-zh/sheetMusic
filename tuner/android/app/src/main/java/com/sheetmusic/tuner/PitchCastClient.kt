@@ -14,10 +14,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * 调试页 WebSocket 发布者：只推送 PitchResult JSON。
+ * 调试页 WebSocket 发布者：只推送 PitchResult JSON；接收 TV 节拍 beat 事件。
  */
 class PitchCastClient(
     private val onStatus: (status: String, detail: String) -> Unit,
+    private val onBeat: ((ts: Long, suppressMs: Long) -> Unit)? = null,
 ) {
     private val main = Handler(Looper.getMainLooper())
     private val client = OkHttpClient.Builder()
@@ -34,6 +35,7 @@ class PitchCastClient(
     private val manualClose = AtomicBoolean(false)
     private val seq = AtomicLong(0)
     @Volatile private var pending: PitchResult? = null
+    @Volatile private var beatGateUntil: Long = 0L
 
     val isConnected: Boolean get() = connected.get()
 
@@ -50,13 +52,16 @@ class PitchCastClient(
         manualClose.set(true)
         connected.set(false)
         pending = null
+        beatGateUntil = 0L
         socket?.close(1000, "bye")
         socket = null
-        emit("idle", "已断开")
+        emit("idle", "")
     }
 
     fun publish(result: PitchResult) {
         if (!connected.get()) return
+        if (System.currentTimeMillis() < beatGateUntil) return
+        if (result.status == "metronome_suppressed") return
         pending = result
         flush()
     }
@@ -66,17 +71,27 @@ class PitchCastClient(
         connected.set(false)
         val url =
             "ws://$host:$port/ws/pitch?session=${java.net.URLEncoder.encode(session, "UTF-8")}&role=phone"
-        emit("connecting", url)
+        emit("connecting", "")
         val req = Request.Builder().url(url).build()
         socket = client.newWebSocket(req, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 connected.set(true)
-                emit("connected", "已连接 $host:$port")
+                emit("connected", "")
                 flush()
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                // ready / pong / ack 可忽略
+                try {
+                    val msg = JSONObject(text)
+                    if (msg.optString("type") == "beat") {
+                        val ts = msg.optLong("ts", System.currentTimeMillis())
+                        val suppressMs = msg.optLong("suppressMs", 120L)
+                        beatGateUntil = maxOf(beatGateUntil, ts + suppressMs)
+                        main.post { onBeat?.invoke(ts, suppressMs) }
+                    }
+                } catch (_: Exception) {
+                    // ignore
+                }
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
@@ -87,10 +102,10 @@ class PitchCastClient(
                 connected.set(false)
                 socket = null
                 if (!manualClose.get()) {
-                    emit("error", "连接断开，1.5s 后重连…")
+                    emit("error", "")
                     main.postDelayed({ if (!manualClose.get()) open() }, 1500)
                 } else {
-                    emit("idle", "已断开")
+                    emit("idle", "")
                 }
             }
 
@@ -98,7 +113,7 @@ class PitchCastClient(
                 connected.set(false)
                 socket = null
                 if (!manualClose.get()) {
-                    emit("error", t.message ?: "连接失败")
+                    emit("error", "")
                     main.postDelayed({ if (!manualClose.get()) open() }, 1500)
                 }
             }
@@ -108,6 +123,7 @@ class PitchCastClient(
     private fun flush() {
         val ws = socket ?: return
         if (!connected.get()) return
+        if (System.currentTimeMillis() < beatGateUntil) return
         val result = pending ?: return
         pending = null
         val n = seq.incrementAndGet()

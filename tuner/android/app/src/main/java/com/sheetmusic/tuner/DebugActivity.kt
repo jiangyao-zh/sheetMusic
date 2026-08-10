@@ -54,12 +54,14 @@ class DebugActivity : AppCompatActivity() {
     private var runningMic = false
     private var runningSim = false
     private var castConnected = false
+    /** 用户已点击连接，直到主动断开前视为投屏会话中（含自动重连） */
+    private var castActive = false
+    private var castWasConnected = false
     private var keepAliveHeld = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var simPhase = 0.0
     private var simTick = 0
-    private var micFrame = 0
 
     private lateinit var castClient: PitchCastClient
 
@@ -78,15 +80,11 @@ class DebugActivity : AppCompatActivity() {
             publishCast(result)
             render(
                 mode = "模拟正弦波",
-                frame = simTick,
                 rms = AudioPreprocessor.rms(floats),
                 peak = floats.maxOfOrNull { abs(it) }?.toDouble() ?: 0.0,
                 note = result.note,
                 frequency = result.frequency,
                 cent = result.cent,
-                score = result.score,
-                status = result.status,
-                confidence = result.confidence,
             )
             simTick++
             handler.postDelayed(this, 66L)
@@ -101,12 +99,22 @@ class DebugActivity : AppCompatActivity() {
         KeepAliveController.setScreenAlwaysOn(this, true)
         ensureNotificationPermission()
 
-        castClient = PitchCastClient { status, detail ->
-            castConnected = status == "connected"
-            castBtn.text = if (castConnected) "断开 TV" else "连接 TV"
-            castStatusView.text = "投屏状态: $status\n$detail"
-            syncKeepAlive()
-        }
+        castClient = PitchCastClient(
+            onStatus = { status, _ ->
+                if (status == "connected") castWasConnected = true
+                if (status == "idle") {
+                    castWasConnected = false
+                    castActive = false
+                }
+                castConnected = status == "connected"
+                castBtn.text = if (castActive) "断开 TV" else "连接 TV"
+                updateCastStatusView(status)
+                syncKeepAlive()
+            },
+            onBeat = { _, suppressMs ->
+                analyzer?.notifyMetronomeBeat(System.currentTimeMillis(), suppressMs)
+            },
+        )
 
         val root = ScrollView(this)
         val panel = LinearLayout(this).apply {
@@ -117,16 +125,7 @@ class DebugActivity : AppCompatActivity() {
 
         statusView = TextView(this).apply {
             text = buildString {
-                append("小提琴音准检测 · 调试页\n\n")
-                append("重要：\n")
-                append("· 说话/打响指通常不会出稳定音符\n")
-                append("· 但「帧计数」和「RMS」必须会变\n")
-                append("· 帧计数不动 = 麦克风根本没在采\n\n")
-                append("步骤：\n")
-                append("1. 下方填写 TV 显示的局域网 IP / 会话 / 端口，点「连接 TV」\n")
-                append("2. 再点「模拟 A4」或「麦克风检测」\n")
-                append("（中继跑在 TV 上，无需电脑 control:server）\n")
-                append("（App 打开会尽量不息屏；检测中息屏也会继续收音/推送）\n")
+                append("音准检测 · 调试页\n\n")
             }
             setTextColor(0xFFF3F5F7.toInt())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
@@ -147,10 +146,11 @@ class DebugActivity : AppCompatActivity() {
         }
 
         castStatusView = TextView(this).apply {
-            text = "投屏状态: idle"
-            setTextColor(0xFF8B93A7.toInt())
+            text = formatCastLine("idle")
+            setTextColor(castLineColor("idle"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setPadding(0, 8, 0, 8)
+            maxLines = 1
         }
 
         castBtn = Button(this).apply {
@@ -204,9 +204,12 @@ class DebugActivity : AppCompatActivity() {
     }
 
     private fun toggleCast() {
-        if (castConnected) {
+        if (castActive) {
             castClient.disconnect()
             castConnected = false
+            castActive = false
+            castWasConnected = false
+            updateCastStatusView("idle")
             syncKeepAlive()
             return
         }
@@ -214,11 +217,11 @@ class DebugActivity : AppCompatActivity() {
         val session = sessionInput.text.toString().trim()
         val port = portInput.text.toString().trim().toIntOrNull() ?: 9091
         if (host.isEmpty()) {
-            castStatusView.text = "投屏状态: error\n请填写 TV 局域网 IP"
+            showCastError("请填写 TV 局域网 IP")
             return
         }
         if (session.isEmpty()) {
-            castStatusView.text = "投屏状态: error\n请填写与 TV 一致的会话 ID"
+            showCastError("请填写与 TV 一致的会话 ID")
             return
         }
         prefs.edit()
@@ -226,8 +229,49 @@ class DebugActivity : AppCompatActivity() {
             .putString("session", session)
             .putString("port", port.toString())
             .apply()
+        castActive = true
+        castWasConnected = false
         castClient.connect(host, port, session, a4 = 440.0)
         syncKeepAlive()
+    }
+
+    private fun showCastError(reason: String) {
+        castStatusView.text = "投屏：连接失败 · $reason"
+        castStatusView.setTextColor(0xFFFF7B72.toInt())
+    }
+
+    private fun updateCastStatusView(status: String) {
+        castStatusView.text = formatCastLine(status)
+        castStatusView.setTextColor(castLineColor(status))
+    }
+
+    private fun formatCastLine(status: String): String {
+        val label = when (status) {
+            "connected" -> "已连接 TV"
+            "connecting" -> "连接中…"
+            "error" -> if (castActive && castWasConnected) "重连中…" else "连接失败"
+            else -> "未连接"
+        }
+        return "投屏：$label"
+    }
+
+    private fun castLineColor(status: String): Int {
+        return when {
+            status == "connected" -> 0xFF3DD68C.toInt()
+            status == "connecting" -> 0xFFE3B341.toInt()
+            status == "error" && castActive && castWasConnected -> 0xFFE3B341.toInt()
+            status == "error" -> 0xFFFF7B72.toInt()
+            else -> 0xFF8B93A7.toInt()
+        }
+    }
+
+    private fun castDisplayLabel(): String {
+        return when {
+            castConnected -> "已连接"
+            castActive && castWasConnected -> "重连中"
+            castActive -> "连接中"
+            else -> "未连接"
+        }
     }
 
     private fun publishCast(result: PitchResult) {
@@ -235,7 +279,7 @@ class DebugActivity : AppCompatActivity() {
     }
 
     private fun syncKeepAlive() {
-        val need = runningMic || runningSim || castConnected
+        val need = runningMic || runningSim || castActive
         if (need && !keepAliveHeld) {
             KeepAliveController.acquire(this, keepScreenOn = true)
             keepAliveHeld = true
@@ -309,14 +353,12 @@ class DebugActivity : AppCompatActivity() {
         val rec = AudioRecorder()
         recorder = rec
         runningMic = true
-        micFrame = 0
         micBtn.text = "停止麦克风"
         simBtn.isEnabled = false
         statusView.text = "麦克风启动中…"
         syncKeepAlive()
         try {
             rec.start { pcm, count ->
-                micFrame++
                 val floats = AudioPreprocessor.pcm16ToFloat(pcm, count)
                 val rms = AudioPreprocessor.rms(floats)
                 val peak = floats.maxOfOrNull { abs(it) }?.toDouble() ?: 0.0
@@ -324,15 +366,11 @@ class DebugActivity : AppCompatActivity() {
                 if (r != null) publishCast(r)
                 render(
                     mode = "麦克风(${rec.activeSourceName})",
-                    frame = micFrame,
                     rms = rms,
                     peak = peak,
                     note = r?.note ?: "--",
                     frequency = r?.frequency ?: 0.0,
                     cent = r?.cent ?: 0.0,
-                    score = r?.score ?: 0.0,
-                    status = r?.status ?: "--",
-                    confidence = r?.confidence ?: 0.0,
                 )
             }
         } catch (e: Exception) {
@@ -359,27 +397,23 @@ class DebugActivity : AppCompatActivity() {
 
     private fun render(
         mode: String,
-        frame: Int,
         rms: Double,
         peak: Double,
         note: String,
         frequency: Double,
         cent: Double,
-        score: Double,
-        status: String,
-        confidence: Double,
     ) {
-        val levelBars = (rms * 40).toInt().coerceIn(0, 20)
-        val meter = "█".repeat(levelBars) + "░".repeat(20 - levelBars)
+        val hasPitch = note != "--" && frequency > 0
         val accent = when {
-            status == "valid" && abs(cent) <= 5 -> 0xFF3DD68C.toInt()
-            status == "valid" && abs(cent) <= 15 -> 0xFF7EE787.toInt()
-            status == "valid" -> 0xFFE3B341.toInt()
+            hasPitch && abs(cent) <= 5 -> 0xFF3DD68C.toInt()
+            hasPitch && abs(cent) <= 15 -> 0xFF7EE787.toInt()
+            hasPitch -> 0xFFE3B341.toInt()
             else -> 0xFFF3F5F7.toInt()
         }
         val sb = SpannableStringBuilder()
+        val titleSp = 15
 
-        fun appendPlain(text: String, sp: Int = 15, color: Int = 0xFF8B93A7.toInt()) {
+        fun appendPlain(text: String, sp: Int = titleSp, color: Int = 0xFF8B93A7.toInt()) {
             val start = sb.length
             sb.append(text)
             sb.setSpan(AbsoluteSizeSpan(sp, true), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -397,28 +431,28 @@ class DebugActivity : AppCompatActivity() {
         }
 
         appendPlain("模式: $mode\n")
-        appendPlain("帧计数: $frame\n")
         appendPlain("音量RMS: ${"%.5f".format(rms)}   Peak: ${"%.5f".format(peak)}\n")
-        appendPlain("电平: [$meter]\n")
         appendPlain(
-            "投屏: ${if (castConnected) "已连接" else "未连接"}\n\n",
-            color = if (castConnected) 0xFF3DD68C.toInt() else 0xFF8B93A7.toInt(),
+            "投屏: ${castDisplayLabel()}\n\n",
+            color = when {
+                castConnected -> 0xFF3DD68C.toInt()
+                castActive && castWasConnected -> 0xFFE3B341.toInt()
+                castActive -> 0xFFE3B341.toInt()
+                else -> 0xFF8B93A7.toInt()
+            },
         )
 
         appendPlain("当前音符\n")
         appendBig("$note\n", 56, accent)
-        appendPlain("\n频率\n")
-        appendBig("${"%.1f".format(frequency)} Hz\n", 34)
-        appendPlain("\n偏差\n")
-        val centText = if (status == "no_signal" || status == "idle") "--" else {
+
+        val freqText = if (frequency <= 0) "--" else "${"%.1f".format(frequency)} Hz"
+        val centText = if (!hasPitch) "--" else {
             val sign = if (cent > 0) "+" else ""
             "$sign${"%.0f".format(cent)} cent"
         }
-        appendBig("$centText\n", 34, accent)
+        appendPlain("频率 $freqText   偏差 $centText\n", sp = titleSp, color = accent)
 
-        appendPlain("\n评分: ${"%.0f".format(score)}    状态: $status\n")
-        appendPlain("置信度: ${"%.2f".format(confidence)}\n")
-
+        /*
         if (mode.startsWith("麦克风")) {
             appendPlain("\n")
             when {
@@ -435,6 +469,7 @@ class DebugActivity : AppCompatActivity() {
                 frame == 0 -> appendPlain("诊断: 还没收到音频帧，等待中…\n")
             }
         }
+        */
 
         statusView.text = sb
     }
@@ -458,6 +493,8 @@ class DebugActivity : AppCompatActivity() {
         stopMic()
         castClient.disconnect()
         castConnected = false
+        castActive = false
+        castWasConnected = false
         KeepAliveController.setScreenAlwaysOn(this, false)
         KeepAliveController.forceRelease(this)
         keepAliveHeld = false
@@ -473,7 +510,7 @@ class DebugActivity : AppCompatActivity() {
         if (requestCode == 1001 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
             startMic()
         } else if (requestCode == 1001) {
-            statusView.text = "未授予麦克风权限。\n设置 → 应用 → 小提琴音准检测 → 权限 → 麦克风 → 允许\n\n或先用「模拟 A4」。"
+            statusView.text = "未授予麦克风权限。\n设置 → 应用 → 音准检测 → 权限 → 麦克风 → 允许\n\n或先用「模拟 A4」。"
         }
     }
 }

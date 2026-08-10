@@ -19,24 +19,87 @@ function pickPrivateIp(list) {
   )
 }
 
+function isControlServerHealth(data) {
+  return !!(data && data.ok === true && data.port)
+}
+
+function requestHealth(host, port) {
+  const url = `http://${host}:${port}/health`
+  return new Promise((resolve) => {
+    if (typeof uni !== 'undefined' && typeof uni.request === 'function') {
+      uni.request({
+        url,
+        method: 'GET',
+        timeout: 2000,
+        success: (res) => {
+          if (res.statusCode === 200 && res.data) resolve(res.data)
+          else resolve(null)
+        },
+        fail: () => resolve(null),
+      })
+      return
+    }
+    fetch(url, { method: 'GET' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => resolve(data))
+      .catch(() => resolve(null))
+  })
+}
+
+function lanIpFromHealth(data) {
+  if (!data || data.ok === false) return ''
+  if (data.lanIp && !isLoopback(data.lanIp)) return String(data.lanIp)
+  return pickPrivateIp(data.lanIps)
+}
+
 /**
  * 从中继 /health 拉取主机网卡 IP（H5 常用）。
  */
 export async function fetchRelayLanIp(port = 9091) {
-  const bases = [`http://127.0.0.1:${port}`, `http://localhost:${port}`]
-  for (const base of bases) {
-    try {
-      const res = await fetch(`${base}/health`, { method: 'GET' })
-      if (!res.ok) continue
-      const data = await res.json()
-      if (data && data.lanIp && !isLoopback(data.lanIp)) return String(data.lanIp)
-      const picked = pickPrivateIp(data && data.lanIps)
-      if (picked) return picked
-    } catch (e) {
-      // try next
-    }
+  const hosts = ['127.0.0.1', 'localhost']
+  for (const host of hosts) {
+    const data = await requestHealth(host, port)
+    const lanIp = lanIpFromHealth(data)
+    if (lanIp) return lanIp
   }
   return ''
+}
+
+/**
+ * App 标准基座无 PitchRelay 时：探测宿主机 control-server。
+ * WebSocket 必须用 lanIp（与手机相同）；10.0.2.2 在 adb forward 存在时会误转发到模拟器空端口。
+ * @returns {Promise<{ wsHost: string, lanIp: string, port: number } | null>}
+ */
+export async function probeExternalDevRelay(port = 9091) {
+  let stored = ''
+  try {
+    stored = String(uni.getStorageSync('tv_pitch_lan_ip') || '').trim()
+  } catch (e) {
+    // ignore
+  }
+  if (stored && !isLoopback(stored)) {
+    const data = await requestHealth(stored, port)
+    if (isControlServerHealth(data)) {
+      const lanIp = lanIpFromHealth(data) || stored
+      return { wsHost: lanIp, lanIp, port: Number(data.port) || port }
+    }
+  }
+
+  for (const host of ['10.0.2.2', '127.0.0.1']) {
+    const data = await requestHealth(host, port)
+    if (!isControlServerHealth(data)) continue
+    const lanIp = lanIpFromHealth(data)
+    if (lanIp) {
+      return { wsHost: lanIp, lanIp, port: Number(data.port) || port }
+    }
+  }
+  return null
+}
+
+/** 校验本机 127.0.0.1 是否真有中继（避免标准基座假阳性） */
+export async function verifyEmbeddedRelay(port = 9091) {
+  const data = await requestHealth('127.0.0.1', port)
+  return !!(data && data.ok !== false)
 }
 
 /**

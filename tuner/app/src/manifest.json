@@ -1,5 +1,5 @@
 {
-  "name": "小提琴音准检测",
+  "name": "音准检测",
   "appid": "__UNI__PITCH01",
   "description": "Violin pitch detection MVP",
   "versionName": "1.0.0",
@@ -54,7 +54,7 @@
     }
   },
   "h5": {
-    "title": "小提琴音准检测",
+    "title": "音准检测",
     "router": {
       "mode": "hash"
     }

@@ -3,7 +3,7 @@
  * App：调用原生 PitchRelay；H5：依赖电脑 control-server（不启动原生）。
  */
 
-import { isLoopback, resolvePhoneLanIp } from '../utils/lanIp'
+import { isLoopback, probeExternalDevRelay, resolvePhoneLanIp, verifyEmbeddedRelay } from '../utils/lanIp'
 
 const STORAGE_LAN = 'tv_pitch_lan_ip'
 const STORAGE_PORT = 'tv_pitch_ws_port'
@@ -34,8 +34,10 @@ class PitchRelayService {
     this.running = false
     this.port = Number(uni.getStorageSync(STORAGE_PORT)) || 9091
     this.lanIp = uni.getStorageSync(STORAGE_LAN) || ''
+    this.wsHost = ''
     this.error = ''
     this.nativeAvailable = false
+    this.mode = 'unknown'
   }
 
   getStatus() {
@@ -43,9 +45,10 @@ class PitchRelayService {
       running: this.running,
       port: this.port,
       lanIp: this.lanIp,
+      wsHost: this.wsHost,
       error: this.error,
       nativeAvailable: this.nativeAvailable,
-      mode: this.nativeAvailable ? 'embedded' : isAppPlus() ? 'missing-plugin' : 'external',
+      mode: this.mode,
     }
   }
 
@@ -59,43 +62,57 @@ class PitchRelayService {
 
     const native = getNative()
     if (native && typeof native.start === 'function') {
-      this.nativeAvailable = true
       const st = await new Promise((resolve) => {
         native.start({ port }, (result) => resolve(result || {}))
       })
-      this.running = !!st.running
-      this.port = st.port || port
-      this.lanIp = st.lanIp || ''
-      this.error = st.error || ''
-      // 模拟器可能是 10.0.2.15；仍写入。H5/电脑侧另有 resolve
-      if (this.lanIp) uni.setStorageSync(STORAGE_LAN, this.lanIp)
-      // App 若拿到回环/空，再尝试补一次
-      if (!this.lanIp || isLoopback(this.lanIp)) {
-        const fixed = await resolvePhoneLanIp({ preferred: this.lanIp, port: this.port })
-        if (fixed) {
-          this.lanIp = fixed
-          uni.setStorageSync(STORAGE_LAN, this.lanIp)
+      const listenPort = st.port || port
+      const embeddedOk = !!st.running && (await verifyEmbeddedRelay(listenPort))
+      if (embeddedOk) {
+        this.nativeAvailable = true
+        this.mode = 'embedded'
+        this.wsHost = '127.0.0.1'
+        this.running = true
+        this.port = listenPort
+        this.lanIp = st.lanIp || ''
+        this.error = st.error || ''
+        if (this.lanIp) uni.setStorageSync(STORAGE_LAN, this.lanIp)
+        if (!this.lanIp || isLoopback(this.lanIp)) {
+          const fixed = await resolvePhoneLanIp({ preferred: this.lanIp, port: this.port })
+          if (fixed) {
+            this.lanIp = fixed
+            uni.setStorageSync(STORAGE_LAN, this.lanIp)
+          }
         }
+        return this.getStatus()
       }
-      return this.getStatus()
     }
 
     this.nativeAvailable = false
     if (isAppPlus()) {
-      this.running = false
-      this.error =
-        '未集成 PitchRelay 原生插件；请使用 tv/android RelayHost 或集成 nativeplugins/PitchRelay'
-      const fixed = await resolvePhoneLanIp({ port: this.port })
-      if (fixed) {
-        this.lanIp = fixed
+      const external = await probeExternalDevRelay(port)
+      if (external) {
+        this.mode = 'external-dev'
+        this.running = true
+        this.error = ''
+        this.wsHost = external.wsHost
+        this.port = external.port
+        this.lanIp = external.lanIp
         uni.setStorageSync(STORAGE_LAN, this.lanIp)
+        return this.getStatus()
       }
+      this.mode = 'missing-plugin'
+      this.running = false
+      this.wsHost = ''
+      this.error =
+        '未找到 control-server；请先运行 cd tv && npm run control:server。若曾执行 adb forward，请先 adb forward --remove tcp:9091'
       return this.getStatus()
     }
 
     // H5：假定外部 control-server 已启动，并解析真实局域网 IP
+    this.mode = 'external'
     this.running = true
     this.error = ''
+    this.wsHost = ''
     let preferred = ''
     try {
       if (typeof location !== 'undefined' && location.hostname) {
@@ -126,6 +143,15 @@ class PitchRelayService {
       })
       if (r.lanIp && !isLoopback(r.lanIp)) {
         this.lanIp = r.lanIp
+        uni.setStorageSync(STORAGE_LAN, this.lanIp)
+        return this.lanIp
+      }
+    }
+    if (this.mode === 'external-dev') {
+      const external = await probeExternalDevRelay(this.port)
+      if (external) {
+        this.lanIp = external.lanIp
+        this.wsHost = external.wsHost
         uni.setStorageSync(STORAGE_LAN, this.lanIp)
         return this.lanIp
       }

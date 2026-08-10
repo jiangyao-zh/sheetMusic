@@ -174,6 +174,24 @@ object PitchRelayServer {
                         )
                     }
                 }
+                "beat" -> {
+                    if (peer.role != "tv") {
+                        safeSend(
+                            conn,
+                            JSONObject().put("type", "error").put("error", "only tv can publish beat").toString(),
+                        )
+                        return
+                    }
+                    val envelope = JSONObject()
+                        .put("type", "beat")
+                        .put("session", peer.session)
+                        .put("ts", msg.optLong("ts", System.currentTimeMillis()))
+                        .put("bpm", msg.optInt("bpm", 0))
+                        .put("beatIndex", msg.optInt("beatIndex", 0))
+                        .put("beatsPerBar", msg.optInt("beatsPerBar", 4))
+                        .put("suppressMs", msg.optLong("suppressMs", 120L))
+                    broadcastToPhones(peer.session, envelope.toString(), conn)
+                }
                 else -> {
                     safeSend(
                         conn,
@@ -201,6 +219,18 @@ object PitchRelayServer {
                 if (client === except) continue
                 val peer = client.getAttachment<Peer>() ?: continue
                 if (peer.role == "phone") continue
+                if (safeSend(client, payload)) n += 1
+            }
+            return n
+        }
+
+        private fun broadcastToPhones(session: String, payload: String, except: WebSocket): Int {
+            val room = rooms[session] ?: return 0
+            var n = 0
+            for (client in room) {
+                if (client === except) continue
+                val peer = client.getAttachment<Peer>() ?: continue
+                if (peer.role != "phone") continue
                 if (safeSend(client, payload)) n += 1
             }
             return n

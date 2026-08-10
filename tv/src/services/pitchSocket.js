@@ -53,6 +53,8 @@ class PitchSocketClient {
     this.heartbeatTimer = null
     this.lastMsgAt = 0
     this.relayMode = 'unknown'
+    this.wsHostCandidates = []
+    this.wsHostIndex = 0
   }
 
   onUpdate(fn) {
@@ -118,7 +120,13 @@ class PitchSocketClient {
     this.lanIp = relay.lanIp || this.lanIp
     if (this.lanIp) uni.setStorageSync(STORAGE_LAN, this.lanIp)
 
-    if (isAppPlus()) {
+    if (relay.mode === 'external-dev') {
+      // 必须与手机相同：只连 Mac 局域网 IP（勿用 10.0.2.2，adb forward 会劫持）
+      const lan = relay.lanIp && !isLoopback(relay.lanIp) ? relay.lanIp : relay.wsHost
+      this.wsHostCandidates = lan ? [lan] : ['10.0.2.2']
+      this.wsHostIndex = 0
+      this.host = this.wsHostCandidates[0]
+    } else if (isAppPlus()) {
       // 内嵌中继：TV 页面始终订本机
       this.host = '127.0.0.1'
     } else if (!this.host || this.host === '127.0.0.1') {
@@ -126,7 +134,7 @@ class PitchSocketClient {
     }
 
     if (isAppPlus() && !relay.running) {
-      this.setStatus('error', relay.error || '内嵌中继未启动')
+      this.setStatus('error', relay.error || '中继未就绪')
       return
     }
 
@@ -137,12 +145,31 @@ class PitchSocketClient {
     this.manualClose = true
     this.clearTimers()
     try {
-      this.socket && this.socket.close({})
+      this.socket?.close({})
     } catch (e) {
       // ignore
     }
     this.socket = null
     this.setStatus('idle', '已断开')
+  }
+
+  /** TV 节拍器：向同 session 手机广播 beat 事件 */
+  publishBeat({ bpm, beatIndex, beatsPerBar, suppressMs = 120 } = {}) {
+    if (!this.socket || this.status !== 'connected') return false
+    const payload = JSON.stringify({
+      type: 'beat',
+      ts: Date.now(),
+      bpm: Number(bpm) || 0,
+      beatIndex: Number(beatIndex) || 0,
+      beatsPerBar: Number(beatsPerBar) || 4,
+      suppressMs: Number(suppressMs) || 120,
+    })
+    try {
+      this.socket.send({ data: payload })
+      return true
+    } catch (e) {
+      return false
+    }
   }
 
   open() {
@@ -192,6 +219,7 @@ class PitchSocketClient {
     })
 
     task.onError((err) => {
+      if (this.tryNextExternalHost()) return
       this.setStatus('error', (err && err.errMsg) || '连接失败')
       this.scheduleReconnect()
     })
@@ -200,12 +228,28 @@ class PitchSocketClient {
       this.socket = null
       this.stopHeartbeat()
       if (!this.manualClose) {
+        if (this.tryNextExternalHost()) return
         this.setStatus('error', '连接断开，重连中…')
         this.scheduleReconnect()
       } else {
         this.setStatus('idle', '已断开')
       }
     })
+  }
+
+  tryNextExternalHost() {
+    if (this.relayMode !== 'external-dev' || !this.wsHostCandidates.length) return false
+    const next = this.wsHostIndex + 1
+    if (next >= this.wsHostCandidates.length) {
+      this.wsHostIndex = 0
+      return false
+    }
+    this.wsHostIndex = next
+    this.host = this.wsHostCandidates[next]
+    setTimeout(() => {
+      if (!this.manualClose) this.open()
+    }, 300)
+    return true
   }
 
   startHeartbeat() {

@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <view class="hero">
-      <text class="title">小提琴音准检测</text>
+      <text class="title">音准检测</text>
       <text class="subtitle">单音 · YIN · TV 同步</text>
     </view>
 
@@ -27,7 +27,7 @@
     <view class="cast-card">
       <view class="cast-head">
         <text class="cast-title">投屏到 TV</text>
-        <text class="cast-status" :class="socketStatus">{{ socketLabel }}</text>
+        <text class="cast-status" :class="socketStatusClass">{{ socketLabel }}</text>
       </view>
       <view class="field">
         <text class="field-label">TV IP</text>
@@ -53,7 +53,6 @@
         <button class="cast-btn" @click="store.connectTv()">连接 TV</button>
         <button class="cast-btn ghost" @click="store.disconnectTv()">断开</button>
       </view>
-      <text v-if="socketDetail" class="cast-detail">{{ socketDetail }}</text>
     </view>
 
     <view v-if="error" class="error">
@@ -91,8 +90,8 @@ const {
   tvHost,
   tvSession,
   socketStatus,
-  socketDetail,
   socketLabel,
+  socketStatusClass,
   castEnabled,
 } = storeToRefs(store)
 const a4Options = [440, 442, 443]
@@ -233,13 +232,24 @@ onUnload(() => {
 .cast-status {
   font-size: 22rpx;
   color: #8b93a7;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
 }
 .cast-status.connected {
   color: #3dd68c;
 }
-.cast-status.connecting,
-.cast-status.error {
+.cast-status.connecting {
   color: #e3b341;
+}
+.cast-status.error {
+  color: #ff7b72;
+}
+.cast-status.idle {
+  color: #8b93a7;
 }
 .field {
   display: flex;
@@ -276,13 +286,6 @@ onUnload(() => {
 }
 .cast-btn.ghost {
   background: #2a3140;
-}
-.cast-detail {
-  display: block;
-  margin-top: 12rpx;
-  color: #6b7280;
-  font-size: 20rpx;
-  word-break: break-all;
 }
 .error {
   margin-top: 24rpx;

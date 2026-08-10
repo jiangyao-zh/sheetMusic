@@ -26,9 +26,11 @@
       </view>
 
       <view class="sidebar-panel info-block">
-        <text class="title">乐谱详情</text>
-        <text class="sub-meta">{{ currentTitle }}</text>
-        <text class="page-info">第 {{ pageIndex + 1 }} / {{ totalPages }} 页</text>
+        <view class="info-header-row">
+          <text class="title">乐谱详情</text>
+          <text class="page-info">第 {{ pageIndex + 1 }} / {{ totalPages }} 页</text>
+        </view>
+        <text class="sheet-title">{{ currentTitle }}</text>
       </view>
 
       <view class="sidebar-panel metro-block">
@@ -299,7 +301,6 @@ export default {
   },
   mounted() {
     this.bindKeys();
-    this.connectPitchSocket();
   },
   onUnload() {
     this.cleanup();
@@ -309,18 +310,19 @@ export default {
   },
   methods: {
     connectPitchSocket() {
-      if (this.pitchUnsub) return;
       const session = ensurePitchSession();
       pitchSocket.configure({ session });
       this.pitchSession = session;
-      this.pitchUnsub = pitchSocket.onUpdate((snap) => {
-        this.pitchSocketStatus = snap.status;
-        this.pitchResult = snap.latest;
-        this.pitchLastMsgAt = snap.lastMsgAt || 0;
-        this.pitchSession = snap.session || session;
-        this.pitchHost = snap.host || '';
-        this.pitchPhoneHost = snap.phoneHost || snap.lanIp || '';
-      });
+      if (!this.pitchUnsub) {
+        this.pitchUnsub = pitchSocket.onUpdate((snap) => {
+          this.pitchSocketStatus = snap.status;
+          this.pitchResult = snap.latest;
+          this.pitchLastMsgAt = snap.lastMsgAt || 0;
+          this.pitchSession = snap.session || session;
+          this.pitchHost = snap.host || '';
+          this.pitchPhoneHost = snap.phoneHost || snap.lanIp || '';
+        });
+      }
       pitchSocket.connect();
     },
     disconnectPitchSocket() {
@@ -488,6 +490,16 @@ export default {
       return true;
     },
     playClick() {
+      // 向手机推送节拍同步，便于短时屏蔽音高分析
+      try {
+        pitchSocket.publishBeat({
+          bpm: this.bpm,
+          beatIndex: this.beatIndex,
+          beatsPerBar: this.beatsPerBar,
+          suppressMs: 130,
+        })
+      } catch (e) { /* ignore */ }
+
       const mode = this.audioMode;
       // #ifdef APP-PLUS
       if (mode === 'soundpool' && this.nativeSoundPool && this.nativeSoundReady) {
@@ -784,10 +796,10 @@ export default {
   overflow: hidden;
 }
 
-/* 音准：高度减为原先 248 的 2/3，从底部多余空间裁掉 */
+/* 音准：高度减为原先 248 的 2/3，底部 GIF 放大后略增高度 */
 .pitch-panel {
   width: 100%;
-  height: 165px;
+  height: 187px;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -910,26 +922,37 @@ export default {
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.info-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .title {
-  display: block;
   font-size: 12px;
   font-weight: 700;
   color: #f5f7fa;
+  flex-shrink: 0;
 }
 
-.sub-meta {
-  color: #97a3b6;
-  font-size: 9px;
-  line-height: 1.3;
+.sheet-title {
+  color: #e8eef7;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
   word-break: break-all;
 }
 
 .page-info {
   color: #b8c6dc;
   font-size: 9px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* 节拍器内部约按 2/3 比例收紧 */

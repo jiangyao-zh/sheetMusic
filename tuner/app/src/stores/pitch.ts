@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getPitchProvider } from '@/services/PitchProvider'
+import { NativePitchProvider } from '@/services/NativePitchProvider'
 import { pitchSocketService, type PitchSocketStatus } from '@/services/PitchSocketService'
 import {
   IDLE_PITCH_RESULT,
@@ -24,26 +25,56 @@ export const usePitchStore = defineStore('pitch', () => {
   const tvPort = ref(Number(uni.getStorageSync(STORAGE_PORT)) || 9091)
   const castEnabled = ref(false)
   const socketStatus = ref<PitchSocketStatus>('idle')
-  const socketDetail = ref('')
+  /** 本轮投屏是否曾成功连上过（用于重连时保持单行稳定文案） */
+  const wasSocketConnected = ref(false)
 
   const label = computed(() => statusLabel(result.value))
   const color = computed(() => statusColor(result.value))
+  /** 单行投屏状态，不展示 URL / 技术细节，避免连接成功后跳动 */
   const socketLabel = computed(() => {
+    if (socketStatus.value === 'connected') return '已连接 TV'
+    if (
+      castEnabled.value &&
+      wasSocketConnected.value &&
+      (socketStatus.value === 'connecting' || socketStatus.value === 'error')
+    ) {
+      return '重连中…'
+    }
     switch (socketStatus.value) {
-      case 'connected':
-        return '已连接 TV'
       case 'connecting':
         return '连接中…'
       case 'error':
-        return '连接异常'
+        return '连接失败'
       default:
         return '未连接'
     }
   })
 
-  pitchSocketService.onStatus((status, detail) => {
+  const socketStatusClass = computed(() => {
+    if (socketStatus.value === 'connected') return 'connected'
+    if (
+      castEnabled.value &&
+      wasSocketConnected.value &&
+      (socketStatus.value === 'connecting' || socketStatus.value === 'error')
+    ) {
+      return 'connecting'
+    }
+    if (socketStatus.value === 'connecting') return 'connecting'
+    if (socketStatus.value === 'error') return 'error'
+    return 'idle'
+  })
+
+  pitchSocketService.onStatus((status) => {
     socketStatus.value = status
-    socketDetail.value = detail || ''
+    if (status === 'connected') wasSocketConnected.value = true
+    if (status === 'idle') wasSocketConnected.value = false
+  })
+
+  pitchSocketService.onBeat((beat) => {
+    const provider = getPitchProvider()
+    if (provider instanceof NativePitchProvider) {
+      provider.notifyMetronomeBeat(beat)
+    }
   })
 
   async function start(options: PitchStartOptions = {}) {
@@ -114,6 +145,7 @@ export const usePitchStore = defineStore('pitch', () => {
 
   function disconnectTv() {
     castEnabled.value = false
+    wasSocketConnected.value = false
     pitchSocketService.disconnect()
   }
 
@@ -129,8 +161,8 @@ export const usePitchStore = defineStore('pitch', () => {
     tvPort,
     castEnabled,
     socketStatus,
-    socketDetail,
     socketLabel,
+    socketStatusClass,
     start,
     stop,
     setTargetNote,
