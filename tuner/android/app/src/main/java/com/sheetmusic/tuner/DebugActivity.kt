@@ -28,6 +28,7 @@ import com.sheetmusic.pitch.audio.AudioPreprocessor
 import com.sheetmusic.pitch.audio.AudioRecorder
 import com.sheetmusic.pitch.keepalive.KeepAliveController
 import com.sheetmusic.pitch.model.PitchResult
+import com.sheetmusic.pitch.ui.PitchUiColors
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
@@ -85,6 +86,7 @@ class DebugActivity : AppCompatActivity() {
                 note = result.note,
                 frequency = result.frequency,
                 cent = result.cent,
+                status = result.status,
             )
             simTick++
             handler.postDelayed(this, 66L)
@@ -371,6 +373,7 @@ class DebugActivity : AppCompatActivity() {
                     note = r?.note ?: "--",
                     frequency = r?.frequency ?: 0.0,
                     cent = r?.cent ?: 0.0,
+                    status = r?.status ?: "no_signal",
                 )
             }
         } catch (e: Exception) {
@@ -402,14 +405,10 @@ class DebugActivity : AppCompatActivity() {
         note: String,
         frequency: Double,
         cent: Double,
+        status: String,
     ) {
         val hasPitch = note != "--" && frequency > 0
-        val accent = when {
-            hasPitch && abs(cent) <= 5 -> 0xFF3DD68C.toInt()
-            hasPitch && abs(cent) <= 15 -> 0xFF7EE787.toInt()
-            hasPitch -> 0xFFE3B341.toInt()
-            else -> 0xFFF3F5F7.toInt()
-        }
+        val accent = PitchUiColors.accent(status, cent)
         val sb = SpannableStringBuilder()
         val titleSp = 15
 
@@ -443,14 +442,18 @@ class DebugActivity : AppCompatActivity() {
         )
 
         appendPlain("当前音符\n")
-        appendBig("$note\n", 56, accent)
+        appendBig("$note\n", 56, if (hasPitch) accent else 0xFFF3F5F7.toInt())
 
         val freqText = if (frequency <= 0) "--" else "${"%.1f".format(frequency)} Hz"
         val centText = if (!hasPitch) "--" else {
             val sign = if (cent > 0) "+" else ""
             "$sign${"%.0f".format(cent)} cent"
         }
-        appendPlain("频率 $freqText   偏差 $centText\n", sp = titleSp, color = accent)
+        appendPlain(
+            "频率 $freqText   偏差 $centText\n",
+            sp = titleSp,
+            color = if (hasPitch) accent else 0xFF8B93A7.toInt(),
+        )
 
         /*
         if (mode.startsWith("麦克风")) {

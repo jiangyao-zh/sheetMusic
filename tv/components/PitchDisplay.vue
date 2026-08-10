@@ -13,24 +13,21 @@
         </view>
 
         <view
-          v-for="tick in ticks"
-          :key="'t-' + tick"
+          v-for="arm in tickArms"
+          :key="'t-' + arm.value"
           class="gauge-arm"
-          :style="armStyle(tick, RADIUS)"
+          :style="arm.style"
         >
-          <view class="tick-mark" :class="{ major: tick % 10 === 0, center: tick === 0 }"></view>
+          <view :class="arm.markClass"></view>
         </view>
 
         <view
-          v-for="mark in scaleMarks"
-          :key="'s-' + mark.value"
+          v-for="arm in scaleArms"
+          :key="'s-' + arm.value"
           class="gauge-arm label-arm"
-          :style="armStyle(mark.value, LABEL_RADIUS)"
+          :style="arm.style"
         >
-          <text
-            class="scale-label"
-            :style="{ transform: `rotate(${-mark.value * DEG_PER_CENT}deg)` }"
-          >{{ mark.label }}</text>
+          <text class="scale-label" :style="arm.labelStyle">{{ arm.label }}</text>
         </view>
 
         <view
@@ -71,6 +68,8 @@
 </template>
 
 <script>
+import { pitchAccentColor } from '@/src/utils/pitchFormat'
+
 const STALE_MS = 800
 /** 半圆半径（px），适配音准模块高度约 165px（原 248 的 2/3） */
 const RADIUS = 70
@@ -96,10 +95,7 @@ export default {
   name: 'PitchDisplay',
   data() {
     return {
-      RADIUS,
-      LABEL_RADIUS,
       NEEDLE_RADIUS,
-      DEG_PER_CENT,
       prevMsgAt: 0,
       intervals: [],
       avgInterval: 9999,
@@ -168,17 +164,28 @@ export default {
       return this.socketStatus === 'connected' && !this.stale && this.result &&
         (this.result.status === 'valid' || this.result.status === 'stabilizing')
     },
-    ticks() {
-      return Array.from({ length: 21 }, (_, i) => -50 + i * 5)
+    /** 刻度与标签是静态的，预先算好样式，避免每帧重建 26 个内联样式对象 */
+    tickArms() {
+      return Array.from({ length: 21 }, (_, i) => -50 + i * 5).map((tick) => {
+        let markClass = 'tick-mark'
+        if (tick % 10 === 0) markClass += ' major'
+        if (tick === 0) markClass += ' center'
+        return { value: tick, markClass, style: this.armStyle(tick, RADIUS) }
+      })
     },
-    scaleMarks() {
+    scaleArms() {
       return [
         { value: -50, label: '-50' },
         { value: -25, label: '-25' },
         { value: 0, label: '0' },
         { value: 25, label: '+25' },
         { value: 50, label: '+50' },
-      ]
+      ].map((mark) => ({
+        value: mark.value,
+        label: mark.label,
+        style: this.armStyle(mark.value, LABEL_RADIUS),
+        labelStyle: { transform: `rotate(${-mark.value * DEG_PER_CENT}deg)` },
+      }))
     },
     noteText() {
       if (!this.active) return '--'
@@ -251,14 +258,8 @@ export default {
       return hz ? `信号强度 ${n} · ${hz}` : `信号强度 ${n}`
     },
     accent() {
-      if (!this.result) return '#8b93a7'
-      if (this.result.status === 'stabilizing') return '#8b93a7'
-      if (this.result.status !== 'valid') return '#8b93a7'
-      const abs = Math.abs(Number(this.result.cent) || 0)
-      if (abs <= 5) return '#3dd68c'
-      if (abs <= 15) return '#7ee787'
-      if (abs <= 30) return '#e3b341'
-      return '#ff7b72'
+      if (!this.active) return pitchAccentColor(null)
+      return pitchAccentColor(this.result)
     },
   },
   methods: {

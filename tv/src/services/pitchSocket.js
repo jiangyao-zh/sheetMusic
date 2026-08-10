@@ -13,6 +13,11 @@ const STORAGE_HOST = 'tv_pitch_ws_host'
 const STORAGE_PORT = 'tv_pitch_ws_port'
 const STORAGE_LAN = 'tv_pitch_lan_ip'
 const DEFAULT_PORT = 9091
+/**
+ * 渲染节流：WebView 单帧重绘约百毫秒，逐条 emit 会让 JS 主线程堆积、
+ * 画面越落越后。收包只更新数据，按此间隔合并渲染最新一帧。
+ */
+const RENDER_THROTTLE_MS = 80
 
 function isAppPlus() {
   try {
@@ -55,6 +60,9 @@ class PitchSocketClient {
     this.relayMode = 'unknown'
     this.wsHostCandidates = []
     this.wsHostIndex = 0
+    this.lastSeq = 0
+    this.renderTimer = null
+    this.lastRenderAt = 0
   }
 
   onUpdate(fn) {
@@ -174,6 +182,8 @@ class PitchSocketClient {
 
   open() {
     this.clearTimers()
+    // 手机重连后 seq 会从头计数
+    this.lastSeq = 0
     try {
       this.socket && this.socket.close({})
     } catch (e) {
@@ -203,6 +213,10 @@ class PitchSocketClient {
       }
       if (!msg || !msg.type) return
       if (msg.type === 'pitch' && msg.result) {
+        const seq = Number(msg.seq) || 0
+        // 丢弃迟到/重复帧，只认最新一帧，避免画面回退
+        if (seq && this.lastSeq && seq <= this.lastSeq) return
+        this.lastSeq = seq
         this.latest = {
           ...msg.result,
           a4: msg.a4,
@@ -210,10 +224,11 @@ class PitchSocketClient {
           ts: msg.ts || Date.now(),
         }
         this.lastMsgAt = Date.now()
-        this.emit()
+        this.scheduleRender()
         return
       }
       if (msg.type === 'ready') {
+        this.lastSeq = 0
         this.setStatus('connected', `已订阅 ${msg.session || this.session}`)
       }
     })
@@ -252,6 +267,16 @@ class PitchSocketClient {
     return true
   }
 
+  /** 合并高频音准帧：最快 RENDER_THROTTLE_MS 渲染一次，始终取最新数据 */
+  scheduleRender() {
+    if (this.renderTimer) return
+    const wait = Math.max(0, RENDER_THROTTLE_MS - (Date.now() - this.lastRenderAt))
+    this.renderTimer = setTimeout(() => {
+      this.renderTimer = null
+      this.emit()
+    }, wait)
+  }
+
   startHeartbeat() {
     this.stopHeartbeat()
     this.heartbeatTimer = setInterval(() => {
@@ -285,6 +310,10 @@ class PitchSocketClient {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
     }
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer)
+      this.renderTimer = null
+    }
   }
 
   setStatus(status, detail) {
@@ -294,6 +323,7 @@ class PitchSocketClient {
   }
 
   emit() {
+    this.lastRenderAt = Date.now()
     const snapshot = this.snapshot()
     this.listeners.forEach((fn) => {
       try {

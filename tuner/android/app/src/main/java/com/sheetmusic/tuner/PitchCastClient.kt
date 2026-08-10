@@ -34,8 +34,15 @@ class PitchCastClient(
     private val connected = AtomicBoolean(false)
     private val manualClose = AtomicBoolean(false)
     private val seq = AtomicLong(0)
+    private val flushScheduled = AtomicBoolean(false)
     @Volatile private var pending: PitchResult? = null
     @Volatile private var beatGateUntil: Long = 0L
+    @Volatile private var lastSentAt: Long = 0L
+
+    private val flushRunnable = Runnable {
+        flushScheduled.set(false)
+        flush()
+    }
 
     val isConnected: Boolean get() = connected.get()
 
@@ -53,6 +60,9 @@ class PitchCastClient(
         connected.set(false)
         pending = null
         beatGateUntil = 0L
+        lastSentAt = 0L
+        flushScheduled.set(false)
+        main.removeCallbacks(flushRunnable)
         socket?.close(1000, "bye")
         socket = null
         emit("idle", "")
@@ -123,9 +133,23 @@ class PitchCastClient(
     private fun flush() {
         val ws = socket ?: return
         if (!connected.get()) return
-        if (System.currentTimeMillis() < beatGateUntil) return
+        val now = System.currentTimeMillis()
+        if (now < beatGateUntil) return
         val result = pending ?: return
+
+        val since = now - lastSentAt
+        if (since < MIN_SEND_INTERVAL_MS) {
+            scheduleFlush(MIN_SEND_INTERVAL_MS - since)
+            return
+        }
+        // 背压：TV 消费不过来时跳过本帧，下次直接发更新的数据，避免越积越久
+        if (ws.queueSize() > MAX_QUEUE_BYTES) {
+            scheduleFlush(MIN_SEND_INTERVAL_MS)
+            return
+        }
+
         pending = null
+        lastSentAt = now
         val n = seq.incrementAndGet()
         val payload = JSONObject()
             .put("type", "pitch")
@@ -147,7 +171,18 @@ class PitchCastClient(
         ws.send(payload)
     }
 
+    private fun scheduleFlush(delayMs: Long) {
+        if (!flushScheduled.compareAndSet(false, true)) return
+        main.postDelayed(flushRunnable, delayMs.coerceAtLeast(1L))
+    }
+
     private fun emit(status: String, detail: String) {
         main.post { onStatus(status, detail) }
+    }
+
+    companion object {
+        /** 推送节流：TV 大屏刷新到 10fps 足够，过快只会让画面积压滞后 */
+        private const val MIN_SEND_INTERVAL_MS = 100L
+        private const val MAX_QUEUE_BYTES = 4096L
     }
 }
