@@ -442,20 +442,19 @@ export default {
 }
 
 .needle-line {
-  width: 2px;
+  width: 1px;
   height: 100%;
   margin: 0 auto;
-  border-radius: 2px;
-  box-shadow: 0 0 7px currentColor;
+  border-radius: 1px;
 }
 
 .gauge-pivot {
   position: absolute;
   left: 50%;
-  bottom: -4px;
-  width: 10px;
-  height: 10px;
-  border: 2px solid;
+  bottom: -3px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid;
   border-radius: 50%;
   background: #141a23;
   transform: translateX(-50%);
