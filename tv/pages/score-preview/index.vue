@@ -78,12 +78,9 @@
       </view>
 
       <view class="sidebar-panel pitch-panel">
-        <PitchDisplay
-          class="pitch-display-host"
-          :result="pitchResult"
-          :socket-status="pitchSocketStatus"
-          :last-msg-at="pitchLastMsgAt"
-          :now="now"
+        <PitchDisplayHost
+          ref="pitchHost"
+          @meta="onPitchMeta"
         />
       </view>
 
@@ -121,10 +118,9 @@ import { getFlatImagesFromStatic } from '@/src/data/flatImages';
 import { getMergedSheetList } from '@/src/api/sheetApi';
 import { getLocalSyncedImages } from '@/src/utils/syncImages';
 import { pitchSocket } from '@/src/services/pitchSocket';
-import { ensurePitchSession } from '@/src/utils/pitchSession';
 import { disableAndroidTvFocusHighlight } from '@/src/utils/tvFocus';
 import MetronomePanel from '@/components/MetronomePanel.vue';
-import PitchDisplay from '@/components/PitchDisplay.vue';
+import PitchDisplayHost from '@/components/PitchDisplayHost.vue';
 
 const KEY_MAP = {
   4: 'back', 13: 'enter', 19: 'up', 20: 'down', 21: 'left', 22: 'right',
@@ -159,7 +155,7 @@ function resolveKey(evt) {
 }
 
 export default {
-  components: { MetronomePanel, PitchDisplay },
+  components: { MetronomePanel, PitchDisplayHost },
   data() {
     return {
       images: [],
@@ -190,13 +186,8 @@ export default {
       now: Date.now(),
       appStartTime: 0,
       timeClockTimer: null,
-      pitchResult: null,
-      pitchSocketStatus: 'idle',
-      pitchLastMsgAt: 0,
       pitchSession: '',
-      pitchHost: '',
       pitchPhoneHost: '',
-      pitchUnsub: null
     };
   },
   computed: {
@@ -310,27 +301,16 @@ export default {
   },
   methods: {
     connectPitchSocket() {
-      const session = ensurePitchSession();
-      pitchSocket.configure({ session });
-      this.pitchSession = session;
-      if (!this.pitchUnsub) {
-        this.pitchUnsub = pitchSocket.onUpdate((snap) => {
-          this.pitchSocketStatus = snap.status;
-          this.pitchResult = snap.latest;
-          this.pitchLastMsgAt = snap.lastMsgAt || 0;
-          this.pitchSession = snap.session || session;
-          this.pitchHost = snap.host || '';
-          this.pitchPhoneHost = snap.phoneHost || snap.lanIp || '';
-        });
-      }
-      pitchSocket.connect();
+      const host = this.$refs.pitchHost;
+      if (host && typeof host.connect === 'function') host.connect();
     },
     disconnectPitchSocket() {
-      if (this.pitchUnsub) {
-        this.pitchUnsub();
-        this.pitchUnsub = null;
-      }
-      pitchSocket.disconnect();
+      const host = this.$refs.pitchHost;
+      if (host && typeof host.disconnect === 'function') host.disconnect();
+    },
+    onPitchMeta({ session, phoneHost }) {
+      if (session) this.pitchSession = session;
+      if (phoneHost) this.pitchPhoneHost = phoneHost;
     },
     setScreenAlwaysOn() {
       // #ifdef APP-PLUS

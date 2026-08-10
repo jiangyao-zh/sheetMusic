@@ -14,10 +14,9 @@ const STORAGE_PORT = 'tv_pitch_ws_port'
 const STORAGE_LAN = 'tv_pitch_lan_ip'
 const DEFAULT_PORT = 9091
 /**
- * 渲染节流：WebView 单帧重绘约百毫秒，逐条 emit 会让 JS 主线程堆积、
- * 画面越落越后。收包只更新数据，按此间隔合并渲染最新一帧。
+ * 渲染节流：合并为 ~30fps；实际用 rAF 对齐屏幕刷新。
  */
-const RENDER_THROTTLE_MS = 80
+const RENDER_THROTTLE_MS = 32
 
 function isAppPlus() {
   try {
@@ -61,7 +60,7 @@ class PitchSocketClient {
     this.wsHostCandidates = []
     this.wsHostIndex = 0
     this.lastSeq = 0
-    this.renderTimer = null
+    this.renderPending = false
     this.lastRenderAt = 0
   }
 
@@ -267,14 +266,25 @@ class PitchSocketClient {
     return true
   }
 
-  /** 合并高频音准帧：最快 RENDER_THROTTLE_MS 渲染一次，始终取最新数据 */
+  /** 合并高频音准帧：rAF + 最短间隔，始终渲染最新一帧 */
   scheduleRender() {
-    if (this.renderTimer) return
-    const wait = Math.max(0, RENDER_THROTTLE_MS - (Date.now() - this.lastRenderAt))
-    this.renderTimer = setTimeout(() => {
-      this.renderTimer = null
+    if (this.renderPending) return
+    this.renderPending = true
+    const run = () => {
+      this.renderPending = false
+      const elapsed = Date.now() - this.lastRenderAt
+      if (elapsed < RENDER_THROTTLE_MS) {
+        this.renderPending = true
+        setTimeout(run, RENDER_THROTTLE_MS - elapsed)
+        return
+      }
       this.emit()
-    }, wait)
+    }
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(run)
+    } else {
+      setTimeout(run, 0)
+    }
   }
 
   startHeartbeat() {
@@ -310,10 +320,7 @@ class PitchSocketClient {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
     }
-    if (this.renderTimer) {
-      clearTimeout(this.renderTimer)
-      this.renderTimer = null
-    }
+    this.renderPending = false
   }
 
   setStatus(status, detail) {

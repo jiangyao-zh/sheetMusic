@@ -181,8 +181,8 @@ class PitchCastClient(
     }
 
     companion object {
-        /** 推送节流：TV 大屏刷新到 10fps 足够，过快只会让画面积压滞后 */
-        private const val MIN_SEND_INTERVAL_MS = 100L
+        /** 推送节流：与模拟器帧率对齐，配合 TV 侧 rAF 合并渲染 */
+        private const val MIN_SEND_INTERVAL_MS = 66L
         private const val MAX_QUEUE_BYTES = 4096L
     }
 }

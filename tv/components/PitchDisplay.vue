@@ -33,12 +33,12 @@
         <view
           class="gauge-arm needle-arm"
           :class="{ inactive: !active }"
-          :style="armStyle(needleCent, NEEDLE_RADIUS)"
+          :style="needleStyle"
         >
-          <view class="needle-line" :style="{ backgroundColor: accent }"></view>
+          <view class="needle-line" :style="needleLineStyle"></view>
         </view>
 
-        <view class="gauge-pivot" :style="{ borderColor: accent }"></view>
+        <view class="gauge-pivot" :style="pivotStyle"></view>
       </view>
     </view>
 
@@ -91,15 +91,47 @@ const SPRITE = {
   run: '/static/gif/spr_run.gif',
 }
 
+function armStyle(cent, height) {
+  const angle = Number(cent) * DEG_PER_CENT
+  return {
+    height: `${height}px`,
+    transform: `translateX(-50%) rotate(${angle}deg)`,
+  }
+}
+
 export default {
   name: 'PitchDisplay',
   data() {
     return {
-      NEEDLE_RADIUS,
+      tickArms: [],
+      scaleArms: [],
       prevMsgAt: 0,
       intervals: [],
       avgInterval: 9999,
+      /** 底部 GIF 切换节流，避免每帧换 src 触发解码 */
+      spriteMode: 'stand',
+      spriteModeAt: 0,
     }
+  },
+  created() {
+    this.tickArms = Array.from({ length: 21 }, (_, i) => -50 + i * 5).map((tick) => {
+      let markClass = 'tick-mark'
+      if (tick % 10 === 0) markClass += ' major'
+      if (tick === 0) markClass += ' center'
+      return { value: tick, markClass, style: armStyle(tick, RADIUS) }
+    })
+    this.scaleArms = [
+      { value: -50, label: '-50' },
+      { value: -25, label: '-25' },
+      { value: 0, label: '0' },
+      { value: 25, label: '+25' },
+      { value: 50, label: '+50' },
+    ].map((mark) => ({
+      value: mark.value,
+      label: mark.label,
+      style: armStyle(mark.value, LABEL_RADIUS),
+      labelStyle: { transform: `rotate(${-mark.value * DEG_PER_CENT}deg)` },
+    }))
   },
   props: {
     result: {
@@ -132,6 +164,7 @@ export default {
         }
       }
       this.prevMsgAt = next
+      this.syncSpriteMode()
     },
     stale(isStale) {
       if (isStale) {
@@ -164,29 +197,6 @@ export default {
       return this.socketStatus === 'connected' && !this.stale && this.result &&
         (this.result.status === 'valid' || this.result.status === 'stabilizing')
     },
-    /** 刻度与标签是静态的，预先算好样式，避免每帧重建 26 个内联样式对象 */
-    tickArms() {
-      return Array.from({ length: 21 }, (_, i) => -50 + i * 5).map((tick) => {
-        let markClass = 'tick-mark'
-        if (tick % 10 === 0) markClass += ' major'
-        if (tick === 0) markClass += ' center'
-        return { value: tick, markClass, style: this.armStyle(tick, RADIUS) }
-      })
-    },
-    scaleArms() {
-      return [
-        { value: -50, label: '-50' },
-        { value: -25, label: '-25' },
-        { value: 0, label: '0' },
-        { value: 25, label: '+25' },
-        { value: 50, label: '+50' },
-      ].map((mark) => ({
-        value: mark.value,
-        label: mark.label,
-        style: this.armStyle(mark.value, LABEL_RADIUS),
-        labelStyle: { transform: `rotate(${-mark.value * DEG_PER_CENT}deg)` },
-      }))
-    },
     noteText() {
       if (!this.active) return '--'
       return this.result.note || '--'
@@ -205,6 +215,15 @@ export default {
       if (!this.active) return 0
       if (this.result.status !== 'valid' && this.result.status !== 'stabilizing') return 0
       return Math.max(-50, Math.min(50, Number(this.result.cent) || 0))
+    },
+    needleStyle() {
+      return armStyle(this.needleCent, NEEDLE_RADIUS)
+    },
+    needleLineStyle() {
+      return { backgroundColor: this.accent }
+    },
+    pivotStyle() {
+      return { borderColor: this.accent }
     },
     freqText() {
       if (!this.active || !this.result.frequency) return '--'
@@ -235,7 +254,7 @@ export default {
       return 'walk'
     },
     spriteSrc() {
-      return SPRITE[this.activityMode] || SPRITE.stand
+      return SPRITE[this.spriteMode] || SPRITE.stand
     },
     activityLabel() {
       if (this.activityMode === 'run') return '推送较快'
@@ -263,12 +282,12 @@ export default {
     },
   },
   methods: {
-    armStyle(cent, height) {
-      const angle = Number(cent) * DEG_PER_CENT
-      return {
-        height: `${height}px`,
-        transform: `translateX(-50%) rotate(${angle}deg)`,
-      }
+    syncSpriteMode() {
+      const next = this.activityMode
+      const now = Date.now()
+      if (next === this.spriteMode && now - this.spriteModeAt < 400) return
+      this.spriteMode = next
+      this.spriteModeAt = now
     },
   },
 }
@@ -416,7 +435,6 @@ export default {
 
 .needle-arm {
   z-index: 3;
-  transition: transform 90ms linear;
 }
 
 .needle-arm.inactive {
