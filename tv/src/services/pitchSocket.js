@@ -71,12 +71,15 @@ class PitchSocketClient {
   }
 
   snapshot() {
-    const phoneHost =
-      (this.lanIp && !isLoopback(this.lanIp) && this.lanIp) ||
-      (!isLoopback(this.host) && this.host) ||
-      this.lanIp ||
-      this.host ||
-      ''
+    let phoneHost = ''
+    const storedLan = uni.getStorageSync(STORAGE_LAN) || ''
+    for (const candidate of [this.lanIp, storedLan, this.host]) {
+      const ip = candidate ? String(candidate).trim() : ''
+      if (ip && !isLoopback(ip)) {
+        phoneHost = ip
+        break
+      }
+    }
     return {
       status: this.status,
       detail: this.detail,
@@ -125,7 +128,13 @@ class PitchSocketClient {
     const relay = await pitchRelay.start({ port: this.port })
     this.relayMode = relay.mode
     this.lanIp = relay.lanIp || this.lanIp
-    if (this.lanIp) uni.setStorageSync(STORAGE_LAN, this.lanIp)
+    if (!this.lanIp || isLoopback(this.lanIp)) {
+      const refreshed = await pitchRelay.refreshLanIp()
+      if (refreshed) this.lanIp = refreshed
+    }
+    if (this.lanIp && !isLoopback(this.lanIp)) {
+      uni.setStorageSync(STORAGE_LAN, this.lanIp)
+    }
 
     if (relay.mode === 'external-dev') {
       // 必须与手机相同：只连 Mac 局域网 IP（勿用 10.0.2.2，adb forward 会劫持）

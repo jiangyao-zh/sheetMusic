@@ -3,7 +3,7 @@
  * App：调用原生 PitchRelay；H5：依赖电脑 control-server（不启动原生）。
  */
 
-import { isLoopback, probeExternalDevRelay, resolvePhoneLanIp, verifyEmbeddedRelay } from '../utils/lanIp'
+import { isLoopback, probeExternalDevRelay, resolveNativeLanIp, resolvePhoneLanIp } from '../utils/lanIp'
 
 const STORAGE_LAN = 'tv_pitch_lan_ip'
 const STORAGE_PORT = 'tv_pitch_ws_port'
@@ -66,8 +66,8 @@ class PitchRelayService {
         native.start({ port }, (result) => resolve(result || {}))
       })
       const listenPort = st.port || port
-      const embeddedOk = !!st.running && (await verifyEmbeddedRelay(listenPort))
-      if (embeddedOk) {
+      if (st.running) {
+        // 内嵌中继只有 WebSocket，无 /health；以 native.start 为准
         this.nativeAvailable = true
         this.mode = 'embedded'
         this.wsHost = '127.0.0.1'
@@ -75,14 +75,7 @@ class PitchRelayService {
         this.port = listenPort
         this.lanIp = st.lanIp || ''
         this.error = st.error || ''
-        if (this.lanIp) uni.setStorageSync(STORAGE_LAN, this.lanIp)
-        if (!this.lanIp || isLoopback(this.lanIp)) {
-          const fixed = await resolvePhoneLanIp({ preferred: this.lanIp, port: this.port })
-          if (fixed) {
-            this.lanIp = fixed
-            uni.setStorageSync(STORAGE_LAN, this.lanIp)
-          }
-        }
+        await this.ensureDisplayLanIp()
         return this.getStatus()
       }
     }
@@ -135,17 +128,31 @@ class PitchRelayService {
     return this.getStatus()
   }
 
+  async ensureDisplayLanIp() {
+    if (this.lanIp && !isLoopback(this.lanIp)) {
+      uni.setStorageSync(STORAGE_LAN, this.lanIp)
+      return this.lanIp
+    }
+    const fromNative = await resolveNativeLanIp()
+    if (fromNative) {
+      this.lanIp = fromNative
+      uni.setStorageSync(STORAGE_LAN, this.lanIp)
+      return this.lanIp
+    }
+    const fixed = await resolvePhoneLanIp({ preferred: this.lanIp, port: this.port })
+    if (fixed && !isLoopback(fixed)) {
+      this.lanIp = fixed
+      uni.setStorageSync(STORAGE_LAN, this.lanIp)
+    }
+    return this.lanIp
+  }
+
   async refreshLanIp() {
-    const native = getNative()
-    if (native && typeof native.getLanIp === 'function') {
-      const r = await new Promise((resolve) => {
-        native.getLanIp((result) => resolve(result || {}))
-      })
-      if (r.lanIp && !isLoopback(r.lanIp)) {
-        this.lanIp = r.lanIp
-        uni.setStorageSync(STORAGE_LAN, this.lanIp)
-        return this.lanIp
-      }
+    const fromNative = await resolveNativeLanIp()
+    if (fromNative) {
+      this.lanIp = fromNative
+      uni.setStorageSync(STORAGE_LAN, this.lanIp)
+      return this.lanIp
     }
     if (this.mode === 'external-dev') {
       const external = await probeExternalDevRelay(this.port)

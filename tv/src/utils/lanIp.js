@@ -52,6 +52,30 @@ function lanIpFromHealth(data) {
   return pickPrivateIp(data.lanIps)
 }
 
+function getNativePitchRelay() {
+  try {
+    if (typeof uni !== 'undefined' && typeof uni.requireNativePlugin === 'function') {
+      return uni.requireNativePlugin('PitchRelay')
+    }
+  } catch (e) {
+    // ignore
+  }
+  return null
+}
+
+/**
+ * App 内嵌 PitchRelay：直接读 Android 网卡 IP（不依赖 /health）。
+ */
+export async function resolveNativeLanIp() {
+  const native = getNativePitchRelay()
+  if (!native || typeof native.getLanIp !== 'function') return ''
+  const r = await new Promise((resolve) => {
+    native.getLanIp((result) => resolve(result || {}))
+  })
+  const ip = r.lanIp ? String(r.lanIp).trim() : ''
+  return ip && !isLoopback(ip) ? ip : ''
+}
+
 /**
  * 从中继 /health 拉取主机网卡 IP（H5 常用）。
  */
@@ -96,10 +120,13 @@ export async function probeExternalDevRelay(port = 9091) {
   return null
 }
 
-/** 校验本机 127.0.0.1 是否真有中继（避免标准基座假阳性） */
+/**
+ * 探测本机 9091 是否为 control-server（带 /health）。
+ * 内嵌 PitchRelay 仅有 WebSocket，此处会返回 false，不能用来否定 native.start()。
+ */
 export async function verifyEmbeddedRelay(port = 9091) {
   const data = await requestHealth('127.0.0.1', port)
-  return !!(data && data.ok !== false)
+  return isControlServerHealth(data)
 }
 
 /**
@@ -118,6 +145,9 @@ export async function resolvePhoneLanIp(opts = {}) {
   } catch (e) {
     // ignore
   }
+
+  const fromNative = await resolveNativeLanIp()
+  if (fromNative) return fromNative
 
   // H5：location 非回环时直接用
   try {
