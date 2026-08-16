@@ -181,7 +181,8 @@ const server = http.createServer((req, res) => {
   res.end('Not Found')
 })
 
-const wss = new WebSocketServer({ noServer: true })
+// 音准帧很小且频率高，关闭压缩，避免额外的编解码开销
+const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false })
 
 server.on('upgrade', (req, socket, head) => {
   const url = new URL(req.url || '/', `http://${req.headers.host}`)
@@ -189,6 +190,8 @@ server.on('upgrade', (req, socket, head) => {
     socket.destroy()
     return
   }
+  // 禁用 Nagle：小包攒包会带来几十毫秒抖动
+  socket.setNoDelay(true)
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit('connection', ws, req, url)
   })

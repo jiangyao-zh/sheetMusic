@@ -52,6 +52,8 @@ object PitchRelayServer {
         return try {
             val s = InnerServer(InetSocketAddress("0.0.0.0", port))
             s.isReuseAddr = true
+            // 音准帧很小（~150B）且频率高，Nagle 会攒包造成几十毫秒抖动
+            s.isTcpNoDelay = true
             s.start()
             server = s
             running.set(true)

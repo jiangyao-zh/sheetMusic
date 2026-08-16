@@ -14,9 +14,10 @@ const STORAGE_PORT = 'tv_pitch_ws_port'
 const STORAGE_LAN = 'tv_pitch_lan_ip'
 const DEFAULT_PORT = 9091
 /**
- * 渲染节流：合并为 ~30fps；实际用 rAF 对齐屏幕刷新。
+ * 渲染节流：仅用于合并突发帧。手机约 15fps，正常情况下每帧立即渲染，
+ * 只有两帧间隔小于该值时才排队，避免额外等待一整个动画帧。
  */
-const RENDER_THROTTLE_MS = 32
+const RENDER_MIN_INTERVAL_MS = 16
 
 function isAppPlus() {
   try {
@@ -60,8 +61,26 @@ class PitchSocketClient {
     this.wsHostCandidates = []
     this.wsHostIndex = 0
     this.lastSeq = 0
-    this.renderPending = false
+    this.renderTimer = null
     this.lastRenderAt = 0
+    this.phoneHost = ''
+    this.refreshPhoneHost()
+  }
+
+  /**
+   * 手机填写用的局域网地址。只在 lanIp/host 变化时重算，
+   * 否则每帧 snapshot 都会同步读一次原生存储，阻塞 JS 线程。
+   */
+  refreshPhoneHost() {
+    let next = ''
+    for (const candidate of [this.lanIp, this.host]) {
+      const ip = candidate ? String(candidate).trim() : ''
+      if (ip && !isLoopback(ip)) {
+        next = ip
+        break
+      }
+    }
+    this.phoneHost = next
   }
 
   onUpdate(fn) {
@@ -71,15 +90,6 @@ class PitchSocketClient {
   }
 
   snapshot() {
-    let phoneHost = ''
-    const storedLan = uni.getStorageSync(STORAGE_LAN) || ''
-    for (const candidate of [this.lanIp, storedLan, this.host]) {
-      const ip = candidate ? String(candidate).trim() : ''
-      if (ip && !isLoopback(ip)) {
-        phoneHost = ip
-        break
-      }
-    }
     return {
       status: this.status,
       detail: this.detail,
@@ -91,7 +101,7 @@ class PitchSocketClient {
       relayMode: this.relayMode,
       lastMsgAt: this.lastMsgAt,
       /** 给手机填写的局域网地址（避免 localhost） */
-      phoneHost,
+      phoneHost: this.phoneHost,
     }
   }
 
@@ -116,6 +126,7 @@ class PitchSocketClient {
       this.lanIp = String(lanIp).trim()
       uni.setStorageSync(STORAGE_LAN, this.lanIp)
     }
+    this.refreshPhoneHost()
     this.emit()
   }
 
@@ -148,6 +159,8 @@ class PitchSocketClient {
     } else if (!this.host || this.host === '127.0.0.1') {
       this.host = defaultSubscribeHost()
     }
+
+    this.refreshPhoneHost()
 
     if (isAppPlus() && !relay.running) {
       this.setStatus('error', relay.error || '中继未就绪')
@@ -275,25 +288,22 @@ class PitchSocketClient {
     return true
   }
 
-  /** 合并高频音准帧：rAF + 最短间隔，始终渲染最新一帧 */
+  /** 距上一帧足够久就立即渲染；否则排队一次，始终渲染最新一帧 */
   scheduleRender() {
-    if (this.renderPending) return
-    this.renderPending = true
-    const run = () => {
-      this.renderPending = false
-      const elapsed = Date.now() - this.lastRenderAt
-      if (elapsed < RENDER_THROTTLE_MS) {
-        this.renderPending = true
-        setTimeout(run, RENDER_THROTTLE_MS - elapsed)
-        return
+    const elapsed = Date.now() - this.lastRenderAt
+    if (elapsed >= RENDER_MIN_INTERVAL_MS) {
+      if (this.renderTimer) {
+        clearTimeout(this.renderTimer)
+        this.renderTimer = null
       }
       this.emit()
+      return
     }
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(run)
-    } else {
-      setTimeout(run, 0)
-    }
+    if (this.renderTimer) return
+    this.renderTimer = setTimeout(() => {
+      this.renderTimer = null
+      this.emit()
+    }, RENDER_MIN_INTERVAL_MS - elapsed)
   }
 
   startHeartbeat() {
@@ -329,7 +339,10 @@ class PitchSocketClient {
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = null
     }
-    this.renderPending = false
+    if (this.renderTimer) {
+      clearTimeout(this.renderTimer)
+      this.renderTimer = null
+    }
   }
 
   setStatus(status, detail) {
