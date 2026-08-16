@@ -6,11 +6,11 @@ import kotlin.math.sqrt
 
 /**
  * 离线轻量乐器/人声判别：谐波结构 + 谱质心 + 帧间稳定性。
- * 偏保守：优先不漏掉真实小提琴音（尤其 G4）。
+ * 偏宽松：优先不漏掉真实小提琴音（含弱信号、换把、高音区）。
  */
 class InstrumentGate(
-    private val minScore: Double = 0.42,
-    private val confirmFrames: Int = 2,
+    private val minScore: Double = 0.26,
+    private val confirmFrames: Int = 1,
 ) {
     private var stableCount = 0
     private var lastFrequency = 0.0
@@ -33,21 +33,25 @@ class InstrumentGate(
             return Verdict(false, 0.0, "no_freq")
         }
 
-        val harm = HarmonicScorer.score(samples, frequency, sampleRate)
+        val harm = HarmonicScorer.bestHarmonicScore(samples, frequency, sampleRate)
+        val h2Ratio = HarmonicScorer.secondHarmonicRatio(samples, frequency, sampleRate)
         val centroid = spectralCentroid(samples, sampleRate)
         val flatness = spectralFlatness(samples)
 
-        // 小提琴中音区：谐波清晰、质心适中、谱较不平
-        var score = yinConfidence * 0.35 + harm * 0.40
-        if (frequency in 180.0..1100.0) score += 0.08
-        if (centroid in frequency * 1.2..frequency * 4.5) score += 0.10
-        if (flatness < 0.55) score += 0.07 else score -= 0.12
+        // 弱基频小提琴（G 弦 / G4）：2f≫f 时谐波分在基频处偏低，给予补偿
+        val weakFundamentalViolin = frequency in 180.0..880.0 && h2Ratio > 1.8
 
-        // 人声倾向：基频弱、谐波差、谱平、质心偏离
-        if (harm < 0.30 && flatness > 0.42) score -= 0.22
-        if (harm < 0.22) score -= 0.15
-        if (frequency > 0 && centroid / frequency > 3.2) score -= 0.22
-        if (flatness > 0.50) score -= 0.12
+        // 小提琴全音域：谐波清晰、质心适中、谱较不平
+        var score = yinConfidence * 0.40 + harm * 0.35
+        if (frequency in 180.0..2700.0) score += 0.10
+        if (weakFundamentalViolin) score += 0.12
+        if (centroid in frequency * 1.0..frequency * 5.5) score += 0.08
+        if (flatness < 0.58) score += 0.06 else score -= 0.08
+
+        // 仅对明显人声特征重罚（弱谐波 + 高谱平 + 质心偏离）
+        if (harm < 0.18 && flatness > 0.55) score -= 0.20
+        if (harm < 0.14) score -= 0.10
+        if (frequency > 0 && centroid / frequency > 4.0 && flatness > 0.48) score -= 0.15
 
         // 帧间稳定性
         if (lastFrequency > 0) {
@@ -61,10 +65,17 @@ class InstrumentGate(
         }
         lastFrequency = frequency
 
+        // 明显人声/噪声：弱谐波结构 + 偏平谱（弱基频小提琴除外）
+        if (!weakFundamentalViolin && harm < 0.26 && flatness > 0.50 && yinConfidence < 0.78) {
+            return Verdict(false, score.coerceIn(0.0, 1.0), "voice_like")
+        }
+
         val accepted = score >= minScore && (
             stableCount >= confirmFrames - 1 ||
-            score >= minScore + 0.10 ||
-            yinConfidence >= 0.82
+                score >= minScore + 0.08 ||
+                yinConfidence >= 0.65 ||
+                weakFundamentalViolin && yinConfidence >= 0.45 ||
+                (yinConfidence >= 0.52 && frequency in 180.0..2700.0 && harm >= 0.12)
             )
         val reason = when {
             accepted -> "ok"

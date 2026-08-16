@@ -16,7 +16,7 @@ class PitchTracker(
         history.clear()
     }
 
-    /** 返回平滑后的频率；样本不足时返回原值。 */
+    /** 返回平滑后的频率；窗口内取中值，起音阶段抑制离群跳变。 */
     fun smooth(frequency: Double): Double {
         if (frequency <= 0) {
             history.clear()
@@ -25,18 +25,22 @@ class PitchTracker(
         if (history.isNotEmpty()) {
             val last = history.last()
             val cents = abs(1200.0 * ln(frequency / last) / ln(2.0))
-            if (cents > maxJumpCents) {
-                // 突变：先保留历史，用加权平均过渡
-                history.addLast(last * 0.7 + frequency * 0.3)
-            } else {
-                history.addLast(frequency)
+            when {
+                // 起音/前几帧：八度级跳变先丢弃，避免连跳多个音名
+                cents > 300 && history.size < 4 -> { /* skip outlier */ }
+                cents > maxJumpCents -> history.addLast(last * 0.7 + frequency * 0.3)
+                else -> history.addLast(frequency)
             }
         } else {
             history.addLast(frequency)
         }
         while (history.size > windowSize) history.removeFirst()
-        if (history.size < 3) return frequency
-        val sorted = history.sorted()
+        return median(history)
+    }
+
+    private fun median(values: Collection<Double>): Double {
+        if (values.isEmpty()) return 0.0
+        val sorted = values.sorted()
         return sorted[sorted.size / 2]
     }
 }

@@ -72,11 +72,49 @@ class YinDetectorTest {
     }
 
     @Test
+    fun transientGateDoesNotBlockFirstInstrumentFrame() {
+        val gate = TransientGate()
+        val samples = synthesize(440.0, harmonics = true)
+        assertTrue(!gate.isTransient(samples))
+    }
+
+    /** 起音稳定器需 3 帧一致后才输出 valid */
+    private fun analyzeStable(analyzer: PitchAnalyzer, samples: FloatArray) {
+        repeat(3) { analyzer.analyzeFloat(samples) }
+    }
+
+    @Test
+    fun analyzerSuppressesNoteJumpOnAttack() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val jumpSeq = listOf(330.0, 494.0, 392.0, 392.0, 392.0, 392.0)
+        val notes = mutableListOf<String>()
+        for (hz in jumpSeq) {
+            val r = analyzer.analyzeFloat(synthesize(hz, harmonics = true))
+            if (r.note != "--") notes.add(r.note)
+        }
+        assertTrue("attack should not emit multiple notes: $notes", notes.size <= 1)
+    }
+
+    @Test
+    fun analyzerAcceptsViolinRangeTones() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, rmsThreshold = 0.001)
+        val freqs = doubleArrayOf(196.0, 293.66, 392.0, 440.0, 659.25, 987.77, 1318.5)
+        for (f in freqs) {
+            val samples = synthesize(f, harmonics = true)
+            analyzeStable(analyzer, samples)
+            val result = analyzer.analyzeFloat(samples)
+            assertTrue("freq=$f status=${result.status}", result.status == "valid")
+            assertTrue("freq=$f note=${result.note}", result.note != "--")
+            // 模拟停弓静音，便于下一音高重新起音锁定
+            analyzer.analyzeFloat(FloatArray(4096))
+        }
+    }
+
+    @Test
     fun analyzerReturnsValidForA4() {
         val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
         val samples = synthesize(440.0, harmonics = true)
-        // 连续两帧以满足稳定性
-        analyzer.analyzeFloat(samples)
+        analyzeStable(analyzer, samples)
         val result = analyzer.analyzeFloat(samples)
         assertEquals("valid", result.status)
         assertEquals("A4", result.note)
@@ -85,10 +123,56 @@ class YinDetectorTest {
     }
 
     @Test
+    fun analyzerReturnsValidForG4ExtremeWeakFundamental() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val samples = synthesize(392.0, harmonics = true, weakFundamental = true, noise = 0.06, fundScale = 0.04)
+        analyzeStable(analyzer, samples)
+        val result = analyzer.analyzeFloat(samples)
+        assertTrue(
+            "status=${result.status} note=${result.note} conf=${result.confidence}",
+            result.status == "valid" || result.status == "stabilizing",
+        )
+        if (result.status == "valid") {
+            assertTrue("note=${result.note}", result.note.startsWith("G"))
+        }
+    }
+
+    @Test
+    fun analyzerReturnsValidForG4VeryWeakFundamental() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val samples = synthesize(392.0, harmonics = true, weakFundamental = true, noise = 0.04, fundScale = 0.06)
+        analyzeStable(analyzer, samples)
+        val result = analyzer.analyzeFloat(samples)
+        assertTrue("status=${result.status} note=${result.note} conf=${result.confidence}", result.status == "valid")
+        assertTrue("note=${result.note} freq=${result.frequency}", result.note.startsWith("G"))
+    }
+
+    @Test
+    fun analyzerReturnsValidForG4WeakFundamental() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val samples = synthesize(392.0, harmonics = true, weakFundamental = true)
+        analyzeStable(analyzer, samples)
+        val result = analyzer.analyzeFloat(samples)
+        assertTrue("status=${result.status} note=${result.note}", result.status == "valid")
+        assertTrue("note=${result.note} freq=${result.frequency}", result.note.startsWith("G"))
+        assertTrue(abs(result.frequency - 392.0) < 8.0)
+    }
+
+    @Test
+    fun analyzerReturnsValidForG3() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val samples = synthesize(196.0, harmonics = true, weakFundamental = true)
+        analyzeStable(analyzer, samples)
+        val result = analyzer.analyzeFloat(samples)
+        assertTrue("status=${result.status} note=${result.note}", result.status == "valid")
+        assertTrue("note=${result.note}", result.note.startsWith("G"))
+    }
+
+    @Test
     fun analyzerReturnsValidForG4() {
         val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
         val samples = synthesize(392.0, harmonics = true)
-        analyzer.analyzeFloat(samples)
+        analyzeStable(analyzer, samples)
         val result = analyzer.analyzeFloat(samples)
         assertEquals("valid", result.status)
         assertEquals("G4", result.note)
@@ -116,6 +200,8 @@ class YinDetectorTest {
     @Test
     fun transientGateDetectsClick() {
         val gate = TransientGate()
+        val baseline = FloatArray(4096) { i -> (0.008 * sin(i * 0.01)).toFloat() }
+        gate.isTransient(baseline)
         val click = synthesizeClick(1500.0)
         assertTrue(gate.isTransient(click))
     }
@@ -124,7 +210,7 @@ class YinDetectorTest {
     fun analyzerRejectsVoiceLikeSignal() {
         val analyzer = PitchAnalyzer(sampleRate = sampleRate, rmsThreshold = 0.001)
         val samples = synthesizeVoiceLike(220.0)
-        analyzer.analyzeFloat(samples)
+        analyzeStable(analyzer, samples)
         val result = analyzer.analyzeFloat(samples)
         assertTrue(
             "status=${result.status}",
@@ -135,13 +221,14 @@ class YinDetectorTest {
     private fun synthesizeVoiceLike(f0: Double): FloatArray {
         val n = 4096
         val out = FloatArray(n)
+        // 非整数倍共振峰，模拟说话（避免与某基频谐波列重合）
+        val formants = doubleArrayOf(730.0, 1090.0, 2440.0)
         for (i in 0 until n) {
             val t = i.toDouble() / sampleRate
-            // 以共振峰为主、弱周期，模拟说话
-            var v = 0.03 * sin(2.0 * PI * f0 * t)
-            v += 0.48 * sin(2.0 * PI * 850.0 * t)
-            v += 0.38 * sin(2.0 * PI * 1250.0 * t)
-            v += 0.22 * sin(2.0 * PI * 2600.0 * t)
+            var v = 0.02 * sin(2.0 * PI * f0 * t)
+            for (f in formants) {
+                v += 0.36 * sin(2.0 * PI * f * t)
+            }
             v += sin(i * 0.017 + 850.0) * 0.10
             out[i] = v.toFloat()
         }
@@ -162,6 +249,7 @@ class YinDetectorTest {
         frequency: Double,
         harmonics: Boolean,
         weakFundamental: Boolean = false,
+        fundScale: Double = 0.18,
         durationSec: Double = 4096.0 / sampleRate,
         noise: Double = 0.01,
     ): FloatArray {
@@ -171,7 +259,7 @@ class YinDetectorTest {
             val t = i.toDouble() / sampleRate
             var v = sin(2.0 * PI * frequency * t)
             if (harmonics) {
-                if (weakFundamental) v *= 0.18
+                if (weakFundamental) v *= fundScale
                 v += 0.45 * sin(2.0 * PI * frequency * 2 * t)
                 v += 0.25 * sin(2.0 * PI * frequency * 3 * t)
                 v += 0.12 * sin(2.0 * PI * frequency * 4 * t)

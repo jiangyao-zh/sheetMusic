@@ -11,11 +11,13 @@ import com.sheetmusic.pitch.model.PitchResult
 class PitchAnalyzer(
     private val sampleRate: Int = 44100,
     private val a4: Double = 440.0,
-    private val rmsThreshold: Double = 0.01,
-    private val confidenceThreshold: Double = 0.55,
+    private val rmsThreshold: Double = 0.005,
+    private val confidenceThreshold: Double = 0.48,
 ) {
     private val yin = YinDetector(sampleRate = sampleRate)
     private val tracker = PitchTracker()
+    private val attackStabilizer = AttackStabilizer()
+    private val noteDisplayLock = NoteDisplayLock()
     private val transientGate = TransientGate()
     private val instrumentGate = InstrumentGate()
     private val metronomeGate = MetronomeGate()
@@ -26,10 +28,12 @@ class PitchAnalyzer(
     /** 上一有效输出，过滤期间短暂保持显示 */
     private var lastValid: PitchResult? = null
     private var lastValidAtMs: Long = 0L
-    private val holdValidMs = 350L
+    private val holdValidMs = 700L
 
     fun reset() {
         tracker.reset()
+        attackStabilizer.reset()
+        noteDisplayLock.reset()
         transientGate.reset()
         instrumentGate.reset()
         metronomeGate.reset()
@@ -55,7 +59,13 @@ class PitchAnalyzer(
 
         val rms = AudioPreprocessor.rms(samples)
         if (rms < rmsThreshold) {
-            return holdOr(PitchResult.noSignal(), now)
+            attackStabilizer.onSilence()
+            noteDisplayLock.reset()
+            tracker.reset()
+            yin.previousFrequency = null
+            lastValid = null
+            lastValidAtMs = 0L
+            return PitchResult.noSignal()
         }
 
         if (metronomeGate.isSuppressed(now)) {
@@ -92,14 +102,28 @@ class PitchAnalyzer(
             return holdOr(PitchResult.voiceRejected(gate.score), now)
         }
 
-        val noteInfo = NoteConverter.fromFrequency(
-            frequency = smoothedFreq,
-            a4 = a4,
-            targetNote = targetNote,
-        )
-        val scored = PitchScorer.evaluate(smoothedFreq, noteInfo.targetFrequency)
+        if (!attackStabilizer.feed(smoothedFreq)) {
+            return holdOr(
+                PitchResult.stabilizing(
+                    PitchResult(
+                        frequency = 0.0,
+                        confidence = round2(yinResult.confidence),
+                        note = "--",
+                        midi = 0.0,
+                        cent = 0.0,
+                        score = 0.0,
+                        status = "stabilizing",
+                    ),
+                ),
+                now,
+            )
+        }
+
+        val outputFreq = attackStabilizer.outputFrequency().takeIf { it > 0 } ?: smoothedFreq
+        val noteInfo = noteDisplayLock.resolve(outputFreq, a4, targetNote)
+        val scored = PitchScorer.evaluate(outputFreq, noteInfo.targetFrequency)
         val result = PitchResult(
-            frequency = round2(smoothedFreq),
+            frequency = round2(outputFreq),
             confidence = round2(yinResult.confidence),
             note = noteInfo.note,
             midi = round2(noteInfo.midi),
@@ -110,7 +134,7 @@ class PitchAnalyzer(
         )
         lastValid = result
         lastValidAtMs = now
-        yin.previousFrequency = smoothedFreq
+        yin.previousFrequency = outputFreq
         return result
     }
 

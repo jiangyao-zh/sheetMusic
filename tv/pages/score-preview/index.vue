@@ -732,16 +732,14 @@ export default {
 }
 
 /*
- * 右侧布局比例（相对上一版）：
- * - 时间高度 ×1.5
- * - 节拍器 / 音准各减 1/3
- * - 省下的高度均分到 4 个模块间距
- * 参考固定块合计 ≈ 时间48 + 详情56 + 音准248 + 连接34 = 386；旧间距 10×4 + 上下边距 20
+ * 右侧：5 个固定高度模块 + 统一间距；高分辨率下内容上移、底部可留空
+ * 固定块 ≈ 时间72 + 详情56 + 节拍器(内容高) + 音准234 + 连接34
  */
 .right-section {
   --sidebar-pad-y: 10px;
-  /* 旧节拍器高 ≈ 100vh-446；节省 = 旧节拍器/3 + 248/3，再扣时间增高≈24 后均分到 4 个间距 */
-  --sidebar-gap: max(16px, calc(10px + (100vh - 446px) / 12 + 248px / 12 - 6px));
+  --pitch-panel-h: 234px;
+  /* 间距为上一版公式的一半，四段间距仍相等 */
+  --sidebar-gap: max(8px, calc((10px + (100vh - 446px) / 12 + 248px / 12 - 6px) / 2));
   flex: 0 0 256px;
   width: 256px;
   max-width: 256px;
@@ -769,17 +767,17 @@ export default {
   margin-top: var(--sidebar-gap);
 }
 
-/* 节拍器吸收剩余高度（约为原先的 2/3，因间距与时间已占走节省空间） */
+/* 节拍器：固定内容高度，不吸收剩余视口（高分辨率底部留空） */
 .metro-block {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   overflow: hidden;
 }
 
-/* 音准：高度减为原先 248 的 2/3，底部 GIF 放大后略增高度 */
+/* 音准：在 187px 基础上 +1/4 → 234px */
 .pitch-panel {
   width: 100%;
-  height: 187px;
+  height: var(--pitch-panel-h);
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;

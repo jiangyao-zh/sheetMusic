@@ -11,6 +11,36 @@ import kotlin.math.sqrt
  */
 object HarmonicScorer {
 
+    /** 二次谐波与基频能量比；>2 表示典型弱基频（小提琴 G 弦常见）。 */
+    fun secondHarmonicRatio(samples: FloatArray, frequency: Double, sampleRate: Int): Double {
+        if (frequency <= 0) return 0.0
+        val omega = 2.0 * PI * frequency / sampleRate
+        val e1 = projectCos(samples, omega).let { it * it }
+        val e2 = projectCos(samples, omega * 2.0).let { it * it }
+        if (e1 < 1e-12) return if (e2 > 1e-10) 99.0 else 0.0
+        return e2 / e1
+    }
+
+    /** 门控用：在 f / f÷2 / f×2 中取最优谐波分（弱基频时 f÷2 往往更高）。 */
+    fun bestHarmonicScore(
+        samples: FloatArray,
+        frequency: Double,
+        sampleRate: Int,
+        minFrequency: Double = 190.0,
+        maxFrequency: Double = 2700.0,
+    ): Double {
+        var best = score(samples, frequency, sampleRate)
+        val half = frequency * 0.5
+        if (half in minFrequency..maxFrequency) {
+            best = maxOf(best, score(samples, half, sampleRate))
+        }
+        val double = frequency * 2.0
+        if (double in minFrequency..maxFrequency) {
+            best = maxOf(best, score(samples, double, sampleRate))
+        }
+        return best
+    }
+
     /** 返回 [0,1]，越高表示越像稳定乐音基频。 */
     fun score(samples: FloatArray, frequency: Double, sampleRate: Int): Double {
         if (frequency <= 0 || samples.isEmpty()) return 0.0
@@ -61,12 +91,19 @@ object HarmonicScorer {
 
         var bestF = rawFrequency
         var bestScore = fundamentalLikelihood(samples, rawFrequency, sampleRate)
+
+        // 仅尝试 f/2 回落（弱基频/倍频误判），不向上提八度
         val halfCandidate = rawFrequency * 0.5
-        if (halfCandidate in minFrequency..maxFrequency &&
-            isSecondHarmonicLock(samples, sampleRate, halfCandidate, rawFrequency)
-        ) {
+        if (halfCandidate in minFrequency..maxFrequency) {
             val s = fundamentalLikelihood(samples, halfCandidate, sampleRate)
-            if (s > bestScore * 1.02) {
+            val preferHalf = when {
+                isSecondHarmonicLock(samples, sampleRate, halfCandidate, rawFrequency) -> true
+                previousFrequency != null &&
+                    secondHarmonicRatio(samples, halfCandidate, sampleRate) > 2.0 &&
+                    s > bestScore * 0.88 -> true
+                else -> false
+            }
+            if (preferHalf && s >= bestScore * 0.88) {
                 bestScore = s
                 bestF = halfCandidate
             }
@@ -92,7 +129,10 @@ object HarmonicScorer {
         val omega = 2.0 * PI * candidateF / sampleRate
         val e1 = projectCos(samples, omega)
         val e2 = projectCos(samples, omega * 2.0)
-        if (e1 < 1e-5) return false
+        if (e1 < 1e-5) {
+            // 极弱基频（G4/G3 真机常见）：二次谐波显著即可判定倍频锁
+            return e2 > 1e-4 && (e2 * e2) > 1e-8
+        }
         return (e2 * e2) > (e1 * e1 * 2.5) && e1 > e2 * 0.12
     }
 

@@ -71,6 +71,7 @@ class PitchCastClient(
     fun publish(result: PitchResult) {
         if (!connected.get()) return
         if (System.currentTimeMillis() < beatGateUntil) return
+        // 节拍/瞬态屏蔽时不推送空帧，但 stabilizing 仍推送以保持 TV 活跃
         if (result.status == "metronome_suppressed") return
         pending = result
         flush()

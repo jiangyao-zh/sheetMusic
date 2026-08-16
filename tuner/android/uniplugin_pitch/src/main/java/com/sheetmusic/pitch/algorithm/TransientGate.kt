@@ -8,8 +8,8 @@ import kotlin.math.max
  * 谱通量 / 帧间能量突变检测，用于屏蔽节拍器短促点击（兜底，配合 TV 节拍同步）。
  */
 class TransientGate(
-    private val fluxThreshold: Double = 0.28,
-    private val attackRatioThreshold: Double = 2.2,
+    private val fluxThreshold: Double = 0.42,
+    private val attackRatioThreshold: Double = 2.4,
 ) {
     private var prevSpectrum: DoubleArray? = null
     private var prevRms = 0.0
@@ -30,8 +30,7 @@ class TransientGate(
         prevSpectrum = spec
 
         if (prev == null || prev.size != spec.size) {
-            prevRms = rms
-            return rms > 0.04
+            return false
         }
 
         var flux = 0.0
@@ -40,7 +39,7 @@ class TransientGate(
             if (d > 0) flux += d
         }
         flux /= spec.size.coerceAtLeast(1)
-        return flux > fluxThreshold && attack > 1.6
+        return flux > fluxThreshold && attack > attackRatioThreshold
     }
 
     private fun magnitudeSpectrum(samples: FloatArray): DoubleArray {

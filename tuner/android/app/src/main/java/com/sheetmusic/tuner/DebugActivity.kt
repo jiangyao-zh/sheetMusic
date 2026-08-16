@@ -54,6 +54,7 @@ class DebugActivity : AppCompatActivity() {
     private var analyzer: PitchAnalyzer? = null
     private var runningMic = false
     private var runningSim = false
+    private var micFrameCount = 0
     private var castConnected = false
     /** 用户已点击连接，直到主动断开前视为投屏会话中（含自动重连） */
     private var castActive = false
@@ -351,16 +352,18 @@ class DebugActivity : AppCompatActivity() {
     }
 
     private fun startMic() {
-        analyzer = PitchAnalyzer(a4 = 440.0, rmsThreshold = 0.005)
+        analyzer = PitchAnalyzer(a4 = 440.0)
         val rec = AudioRecorder()
         recorder = rec
         runningMic = true
+        micFrameCount = 0
         micBtn.text = "停止麦克风"
         simBtn.isEnabled = false
         statusView.text = "麦克风启动中…"
         syncKeepAlive()
         try {
             rec.start { pcm, count ->
+                micFrameCount++
                 val floats = AudioPreprocessor.pcm16ToFloat(pcm, count)
                 val rms = AudioPreprocessor.rms(floats)
                 val peak = floats.maxOfOrNull { abs(it) }?.toDouble() ?: 0.0
@@ -374,6 +377,7 @@ class DebugActivity : AppCompatActivity() {
                     frequency = r?.frequency ?: 0.0,
                     cent = r?.cent ?: 0.0,
                     status = r?.status ?: "no_signal",
+                    frame = micFrameCount,
                 )
             }
         } catch (e: Exception) {
@@ -406,6 +410,7 @@ class DebugActivity : AppCompatActivity() {
         frequency: Double,
         cent: Double,
         status: String,
+        frame: Int = 0,
     ) {
         val hasPitch = note != "--" && frequency > 0
         val accent = PitchUiColors.accent(status, cent)
@@ -454,25 +459,27 @@ class DebugActivity : AppCompatActivity() {
             sp = titleSp,
             color = if (hasPitch) accent else 0xFF8B93A7.toInt(),
         )
+        appendPlain("状态: $status\n", sp = 13)
 
-        /*
         if (mode.startsWith("麦克风")) {
             appendPlain("\n")
             when {
-                frame > 5 && rms < 0.001 -> {
+                frame > 5 && rms < 0.001 && peak < 0.001 -> {
                     appendPlain(
                         "诊断: 在采帧，但电平始终为 0\n" +
-                            "这不是算法问题，是麦克风输入没进来。\n" +
-                            "请检查 macOS/模拟器麦克风路由，或换真机。\n",
+                            "若持续出现，请检查麦克风权限或换音源；\n" +
+                            "系统会自动尝试 CAMCORDER / UNPROCESSED。\n",
                     )
                 }
-                frame > 5 && rms >= 0.001 && status == "no_signal" -> {
-                    appendPlain("诊断: 已采到环境声，但不是稳定乐音。\n可点「模拟 A4」验证算法。\n")
+                frame > 5 && rms >= 0.001 && !hasPitch -> {
+                    appendPlain(
+                        "诊断: 已采到声音，状态=$status\n" +
+                            "请靠近麦克风、演奏清晰单音（如 A4）。\n",
+                    )
                 }
-                frame == 0 -> appendPlain("诊断: 还没收到音频帧，等待中…\n")
+                frame in 1..5 -> appendPlain("诊断: 等待音频帧…\n")
             }
         }
-        */
 
         statusView.text = sb
     }

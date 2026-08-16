@@ -71,10 +71,11 @@
 import { pitchAccentColor } from '@/src/utils/pitchFormat'
 
 const STALE_MS = 800
-/** 半圆半径（px），适配音准模块高度约 165px（原 248 的 2/3） */
-const RADIUS = 70
-const LABEL_RADIUS = 84
-const NEEDLE_RADIUS = 58
+/** 仪表缩放：面板 187→234px（+1/4），内部同比例放大 */
+const GAUGE_SCALE = 1.25
+const RADIUS = Math.round(70 * GAUGE_SCALE)
+const LABEL_RADIUS = Math.round(84 * GAUGE_SCALE)
+const NEEDLE_RADIUS = Math.round(58 * GAUGE_SCALE)
 /** -50～+50 cent 映射到 -80°～+80° */
 const DEG_PER_CENT = 1.6
 /** 推送间隔阈值：更快用跑步，更慢用走路（手机检测约 66ms） */
@@ -244,13 +245,13 @@ export default {
       if (this.stale || !this.result) return 'stand'
       const status = this.result.status
       if (status === 'no_signal' || status === 'idle') return 'stand'
-      if (status === 'metronome_suppressed' || status === 'voice_rejected') return 'walk'
-      if (status === 'too_low' || status === 'stabilizing') return 'walk'
       if (status === 'valid') {
         if (this.avgInterval <= RUN_INTERVAL_MS) return 'run'
-        if (this.avgInterval <= WALK_INTERVAL_MS) return 'walk'
         return 'walk'
       }
+      if (status === 'stabilizing') return 'run'
+      if (status === 'metronome_suppressed' || status === 'voice_rejected') return 'walk'
+      if (status === 'too_low') return 'walk'
       return 'walk'
     },
     spriteSrc() {
@@ -266,7 +267,7 @@ export default {
       if (this.stale) return '超过 0.8s 未收到数据'
       if (!this.result) return '未检测到声音'
       if (this.result.status === 'metronome_suppressed') return '过滤节拍器干扰'
-      if (this.result.status === 'voice_rejected') return '过滤环境人声'
+      if (this.result.status === 'voice_rejected') return '乐音校验中'
       if (this.result.status === 'stabilizing') return '保持上一有效音高'
       if (this.result.status === 'no_signal' || this.result.status === 'idle') {
         return '未检测到声音'
@@ -297,8 +298,7 @@ export default {
 .pitch-block {
   background: #141a23;
   border-radius: 8px;
-  /* 底部 padding 更小：高度裁减从底部多余空间开始 */
-  padding: 6px 6px 4px;
+  padding: 8px 8px 5px;
   margin-top: 0;
   width: 100%;
   height: 100%;
@@ -324,13 +324,13 @@ export default {
 
 .pitch-title {
   color: #f5f7fa;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .pitch-link {
-  font-size: 9px;
+  font-size: 11px;
   color: #97a3b6;
   flex-shrink: 1;
   text-align: right;
@@ -355,28 +355,27 @@ export default {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  padding: 4px 0 0;
+  padding: 5px 0 0;
   overflow: visible;
   width: 100%;
   flex: 0 0 auto;
 }
 
-/* 舞台宽=2R、高=R，圆环为正圆上半部分 → 与刻度同心 */
+/* 舞台宽=2R、高=R，圆环为正圆上半部分 → 与刻度同心（234px 面板 ×1.25） */
 .gauge-stage {
   position: relative;
-  width: 140px;
-  height: 70px;
+  width: 176px;
+  height: 88px;
   overflow: visible;
   margin: 0 auto;
 }
 
-/* 单独裁切正圆上半部分，避免外圈被压扁 */
 .ring-clip {
   position: absolute;
   left: 0;
   top: 0;
-  width: 140px;
-  height: 70px;
+  width: 176px;
+  height: 88px;
   overflow: hidden;
 }
 
@@ -384,10 +383,10 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
-  width: 140px;
-  height: 140px;
+  width: 176px;
+  height: 176px;
   box-sizing: border-box;
-  border: 5px solid #242c38;
+  border: 6px solid #242c38;
   border-radius: 50%;
 }
 
@@ -402,20 +401,20 @@ export default {
 
 .tick-mark {
   width: 1px;
-  height: 7px;
+  height: 9px;
   margin: 0 auto;
   background: #4d5868;
 }
 
 .tick-mark.major {
-  width: 2px;
-  height: 10px;
+  width: 3px;
+  height: 13px;
   background: #667386;
 }
 
 .tick-mark.center {
-  width: 4px;
-  height: 13px;
+  width: 5px;
+  height: 16px;
   background: #3dd68c;
 }
 
@@ -425,10 +424,10 @@ export default {
 
 .scale-label {
   display: block;
-  width: 24px;
-  margin-left: -6px;
+  width: 30px;
+  margin-left: -8px;
   color: #697485;
-  font-size: 9px;
+  font-size: 11px;
   text-align: center;
   line-height: 1;
 }
@@ -451,9 +450,9 @@ export default {
 .gauge-pivot {
   position: absolute;
   left: 50%;
-  bottom: -3px;
-  width: 7px;
-  height: 7px;
+  bottom: -4px;
+  width: 9px;
+  height: 9px;
   border: 1px solid;
   border-radius: 50%;
   background: #141a23;
@@ -465,8 +464,8 @@ export default {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: baseline;
-  column-gap: 4px;
-  margin-top: 4px;
+  column-gap: 5px;
+  margin-top: 5px;
   padding: 0 2px;
   min-width: 0;
   flex-shrink: 0;
@@ -481,7 +480,7 @@ export default {
 }
 
 .pitch-note {
-  font-size: 28px;
+  font-size: 35px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
@@ -489,13 +488,13 @@ export default {
 
 .pitch-octave {
   margin-left: 2px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .readout-side {
   color: #97a3b6;
-  font-size: 10px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -504,21 +503,21 @@ export default {
 }
 
 .pitch-footer {
-  margin-top: 3px;
+  margin-top: 4px;
   flex-shrink: 0;
 }
 
 .activity-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 48px;
+  gap: 10px;
+  min-height: 60px;
   min-width: 0;
 }
 
 .activity-sprite {
-  width: 68px;
-  height: 44px;
+  width: 85px;
+  height: 55px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }
@@ -533,14 +532,14 @@ export default {
 
 .activity-label {
   color: #e8eef7;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.15;
 }
 
 .activity-hint {
   color: #8b95a7;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 400;
   line-height: 1.25;
   word-break: break-word;
