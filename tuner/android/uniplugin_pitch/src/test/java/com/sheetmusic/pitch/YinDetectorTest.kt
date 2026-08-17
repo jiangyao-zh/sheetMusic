@@ -92,7 +92,32 @@ class YinDetectorTest {
             val r = analyzer.analyzeFloat(synthesize(hz, harmonics = true))
             if (r.note != "--") notes.add(r.note)
         }
-        assertTrue("attack should not emit multiple notes: $notes", notes.size <= 1)
+        assertTrue("attack should not emit multiple notes: $notes", notes.distinct().size <= 1)
+    }
+
+    @Test
+    fun analyzerJumpsA4ToE5WithoutIntermediateNotes() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val a4 = synthesize(440.0, harmonics = true)
+        val e5 = synthesize(659.25, harmonics = true)
+        analyzeStable(analyzer, a4)
+        val notes = mutableListOf<String>()
+        repeat(4) { analyzer.analyzeFloat(a4).note.takeIf { it != "--" }?.let { notes.add(it) } }
+        repeat(6) { analyzer.analyzeFloat(e5).note.takeIf { it != "--" }?.let { notes.add(it) } }
+        assertTrue("notes=$notes", notes.all { it == "A4" || it == "E5" })
+        assertTrue("must reach E5, notes=$notes", notes.contains("E5"))
+        assertTrue("must not walk through C#5/D#5, notes=$notes", notes.none { it == "C#5" || it == "D#5" })
+    }
+
+    @Test
+    fun analyzerSustainedA4StaysA4() {
+        val analyzer = PitchAnalyzer(sampleRate = sampleRate, a4 = 440.0, rmsThreshold = 0.001)
+        val a4 = synthesize(440.0, harmonics = true)
+        analyzeStable(analyzer, a4)
+        repeat(8) {
+            val r = analyzer.analyzeFloat(a4)
+            assertEquals("status=${r.status}", "A4", r.note)
+        }
     }
 
     @Test
@@ -229,7 +254,8 @@ class YinDetectorTest {
             for (f in formants) {
                 v += 0.36 * sin(2.0 * PI * f * t)
             }
-            v += sin(i * 0.017 + 850.0) * 0.10
+            v += sin(i * 0.017 + 850.0) * 0.22
+            v += sin(i * 0.031 + 190.0) * 0.18
             out[i] = v.toFloat()
         }
         return out

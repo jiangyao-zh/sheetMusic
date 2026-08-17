@@ -29,6 +29,7 @@ class PitchAnalyzer(
     private var lastValid: PitchResult? = null
     private var lastValidAtMs: Long = 0L
     private val holdValidMs = 700L
+    private var lastRawHz = 0.0
 
     fun reset() {
         tracker.reset()
@@ -40,6 +41,7 @@ class PitchAnalyzer(
         yin.previousFrequency = null
         lastValid = null
         lastValidAtMs = 0L
+        lastRawHz = 0.0
     }
 
     /** TV 节拍事件：在 suppressMs 内暂停分析 */
@@ -65,6 +67,7 @@ class PitchAnalyzer(
             yin.previousFrequency = null
             lastValid = null
             lastValidAtMs = 0L
+            lastRawHz = 0.0
             return PitchResult.noSignal()
         }
 
@@ -78,8 +81,9 @@ class PitchAnalyzer(
             return holdOr(PitchResult.metronomeSuppressed(), now)
         }
 
-        yin.previousFrequency = lastValid?.frequency?.takeIf { it > 0 }
+        yin.previousFrequency = lastRawHz.takeIf { it > 0 }
         val yinResult = yin.detect(processed) ?: return holdOr(PitchResult.noSignal(), now)
+        lastRawHz = yinResult.frequency
 
         if (yinResult.confidence < confidenceThreshold) {
             return holdOr(
@@ -96,8 +100,9 @@ class PitchAnalyzer(
             )
         }
 
-        val smoothedFreq = tracker.smooth(yinResult.frequency)
-        val gate = instrumentGate.evaluate(processed, sampleRate, smoothedFreq, yinResult.confidence)
+        val rawHz = yinResult.frequency
+        val smoothedFreq = tracker.smooth(rawHz)
+        val gate = instrumentGate.evaluate(processed, sampleRate, rawHz, yinResult.confidence)
         if (!gate.accepted) {
             return holdOr(PitchResult.voiceRejected(gate.score), now)
         }
@@ -119,11 +124,16 @@ class PitchAnalyzer(
             )
         }
 
-        val outputFreq = attackStabilizer.outputFrequency().takeIf { it > 0 } ?: smoothedFreq
-        val noteInfo = noteDisplayLock.resolve(outputFreq, a4, targetNote)
-        val scored = PitchScorer.evaluate(outputFreq, noteInfo.targetFrequency)
+        val uiFreq = attackStabilizer.outputFrequency().takeIf { it > 0 } ?: smoothedFreq
+        val noteInfo = noteDisplayLock.resolve(
+            frequency = rawHz,
+            a4 = a4,
+            targetNote = targetNote,
+            confidence = yinResult.confidence,
+        )
+        val scored = PitchScorer.evaluate(rawHz, noteInfo.targetFrequency)
         val result = PitchResult(
-            frequency = round2(outputFreq),
+            frequency = round2(uiFreq),
             confidence = round2(yinResult.confidence),
             note = noteInfo.note,
             midi = round2(noteInfo.midi),
@@ -134,7 +144,6 @@ class PitchAnalyzer(
         )
         lastValid = result
         lastValidAtMs = now
-        yin.previousFrequency = outputFreq
         return result
     }
 

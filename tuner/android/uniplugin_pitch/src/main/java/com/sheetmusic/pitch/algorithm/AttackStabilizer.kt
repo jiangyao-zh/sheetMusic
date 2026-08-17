@@ -4,7 +4,8 @@ import kotlin.math.abs
 import kotlin.math.ln
 
 /**
- * 起音稳定器：从静音到发声时，需连续若干帧频率一致才输出音符，避免拉弓瞬间连跳多个音名。
+ * 起音稳定器：静音→发声需连续若干帧频率一致才输出。
+ * 已锁定后的大跨度换音直接 snap，不再二次低通拖住目标音。
  */
 class AttackStabilizer(
     private val agreeFrames: Int = 3,
@@ -26,11 +27,9 @@ class AttackStabilizer(
 
     val isReady: Boolean get() = phase == Phase.READY
 
-    /** 当前可输出的锁定频率；未就绪时为 0 */
     fun outputFrequency(): Double = if (phase == Phase.READY) lockedFreq else 0.0
 
     /**
-     * 喂入本帧平滑频率。
      * @return true 表示已通过起音校验，可以展示音名
      */
     fun feed(frequency: Double): Boolean {
@@ -56,8 +55,12 @@ class AttackStabilizer(
                 return true
             }
             Phase.READY -> {
-                // 锁定后缓慢跟随，大幅跳变（换音）仍交给 NoteDisplayLock
-                lockedFreq = lockedFreq * 0.72 + frequency * 0.28
+                val jump = centsBetween(lockedFreq, frequency)
+                lockedFreq = if (jump >= PitchTracker.LARGE_JUMP_CENTS) {
+                    frequency
+                } else {
+                    lockedFreq * 0.55 + frequency * 0.45
+                }
                 return true
             }
         }
